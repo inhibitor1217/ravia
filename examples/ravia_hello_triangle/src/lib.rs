@@ -28,5 +28,6 @@ pub fn run() {
 
     boot(EngineConfig {
         window_title: "Hello Triangle",
+        ..Default::default()
     });
 }

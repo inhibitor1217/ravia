@@ -57,7 +57,7 @@ impl Gpu {
             .find(|f| f.is_srgb())
             .copied()
             .unwrap_or(surface_capabilities.formats[0]);
-        let (surface_width, surface_height) = Self::surface_size(&window);
+        let (surface_width, surface_height) = Self::window_size(&window);
         let surface_config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
             format: surface_format,
@@ -77,9 +77,17 @@ impl Gpu {
         }
     }
 
-    /// Retrieves the current surface size from the window.
-    fn surface_size(window: &winit::window::Window) -> (u32, u32) {
+    /// Retrieves the current display size from the window.
+    fn window_size(window: &winit::window::Window) -> (u32, u32) {
         let winit::dpi::PhysicalSize { width, height } = window.inner_size();
         (width.max(1), height.max(1))
+    }
+
+    /// Resizes the GPU resources to match the window size.
+    pub fn resize(&self, width: u32, height: u32) {
+        let mut surface_config = self.surface_config.lock().unwrap();
+        surface_config.width = width.max(1);
+        surface_config.height = height.max(1);
+        self.surface.configure(&self.device, &surface_config);
     }
 }

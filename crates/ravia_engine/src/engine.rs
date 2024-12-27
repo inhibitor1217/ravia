@@ -3,6 +3,7 @@ use std::{future::Future, sync::Arc};
 use log::{debug, info};
 use winit::{
     application::ApplicationHandler,
+    dpi::LogicalSize,
     event::WindowEvent,
     event_loop::{ActiveEventLoop, ControlFlow, EventLoop, EventLoopProxy},
     window::Window,
@@ -11,10 +12,24 @@ use winit::{
 use crate::graphics;
 
 /// Engine configuration.
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug)]
 pub struct EngineConfig {
     /// Window title.
     pub window_title: &'static str,
+    /// Display width. Only effective in native mode.
+    pub display_width: u32,
+    /// Display height. Only effective in native mode.
+    pub display_height: u32,
+}
+
+impl Default for EngineConfig {
+    fn default() -> Self {
+        Self {
+            window_title: "",
+            display_width: 1024,
+            display_height: 720,
+        }
+    }
 }
 
 /// Engine events to work with the winit event loop.
@@ -91,6 +106,9 @@ impl ApplicationHandler<EngineEvent> for EngineState {
         }
 
         match event {
+            WindowEvent::Resized(physical_size) => {
+                app.resize(physical_size.width, physical_size.height);
+            }
             WindowEvent::CloseRequested => {
                 info!(target: "ravia_engine::engine_state", "Window close requested, exiting.");
                 event_loop.exit();
@@ -149,8 +167,14 @@ impl Engine {
         Self { window, gpu }
     }
 
+    /// Creates a new [`Window`].
     fn new_window(event_loop: &ActiveEventLoop, config: EngineConfig) -> Window {
-        let window_attrs = Window::default_attributes().with_title(config.window_title);
+        let window_attrs = Window::default_attributes()
+            .with_title(config.window_title)
+            .with_inner_size(LogicalSize::new(
+                config.display_width,
+                config.display_height,
+            ));
 
         let window = event_loop
             .create_window(window_attrs)
@@ -172,6 +196,11 @@ impl Engine {
         }
 
         window
+    }
+
+    /// Handles the display resize.
+    fn resize(&self, width: u32, height: u32) {
+        self.gpu.resize(width, height);
     }
 }
 
