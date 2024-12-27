@@ -1,12 +1,14 @@
 use std::sync::Arc;
 
-use log::{info, trace};
+use log::{debug, info, trace};
 use winit::{
     application::ApplicationHandler,
     event::WindowEvent,
     event_loop::{ActiveEventLoop, ControlFlow, EventLoop},
     window::Window,
 };
+
+use crate::graphics;
 
 /// Engine configuration.
 #[derive(Default)]
@@ -75,6 +77,7 @@ impl ApplicationHandler for EngineState {
 /// [`Engine`] contains the resources for the components of the engine.
 pub struct Engine {
     window: Arc<Window>,
+    gpu: Arc<graphics::Gpu>,
 }
 
 impl Engine {
@@ -91,12 +94,23 @@ impl Engine {
 
     /// Creates a new [`Engine`].
     fn new(event_loop: &ActiveEventLoop, config: &EngineConfig) -> Self {
+        debug!(target: "ravia_engine", "Initializing window");
+        let window = Self::init_window(event_loop, config);
+        let window = Arc::new(window);
+
+        debug!(target: "ravia_engine", "Initializing WebGPU resources");
+        let gpu = pollster::block_on(graphics::Gpu::new(window.clone()));
+        let gpu = Arc::new(gpu);
+
+        Self { window, gpu }
+    }
+
+    fn init_window(event_loop: &ActiveEventLoop, config: &EngineConfig) -> Window {
         let window_attrs = Window::default_attributes().with_title(config.window_title);
 
         let window = event_loop
             .create_window(window_attrs)
             .expect("Failed to create window");
-        let window = Arc::new(window);
 
         #[cfg(target_arch = "wasm32")]
         {
@@ -113,6 +127,6 @@ impl Engine {
                 .expect("Failed to append canvas to root element");
         }
 
-        Self { window }
+        window
     }
 }
