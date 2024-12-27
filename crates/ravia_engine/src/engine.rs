@@ -92,10 +92,7 @@ impl Engine {
 
         #[cfg(target_arch = "wasm32")]
         {
-            use winit::dpi::PhysicalSize;
             use winit::platform::web::WindowExtWebSys;
-
-            let _ = window.request_inner_size(PhysicalSize::new(800, 600));
 
             web_sys::window()
                 .and_then(|win| win.document())
