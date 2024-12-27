@@ -90,6 +90,24 @@ impl Engine {
             .expect("Failed to create window");
         let window = Arc::new(window);
 
+        #[cfg(target_arch = "wasm32")]
+        {
+            use winit::dpi::PhysicalSize;
+            use winit::platform::web::WindowExtWebSys;
+
+            let _ = window.request_inner_size(PhysicalSize::new(800, 600));
+
+            web_sys::window()
+                .and_then(|win| win.document())
+                .and_then(|doc| {
+                    let root = doc.get_element_by_id("root")?;
+                    let canvas = web_sys::Element::from(window.canvas()?);
+                    root.append_child(&canvas).ok()?;
+                    Some(())
+                })
+                .expect("Failed to append canvas to root element");
+        }
+
         Self { window }
     }
 }
