@@ -1,0 +1,10 @@
+#!/bin/bash
+
+echo "cargo fmt"
+cargo fmt > /dev/null
+
+echo "cargo clippy"
+cargo clippy > /dev/null
+
+echo "cargo test"
+cargo test > /dev/null
