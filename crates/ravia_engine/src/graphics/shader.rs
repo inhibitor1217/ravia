@@ -119,3 +119,18 @@ impl Shader {
         &self.pipeline
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::prelude::*;
+
+    #[test]
+    fn can_load_shader_config_from_file() {
+        let config = crate::shader_config!("shaders/triangle.wgsl", "triangle");
+
+        assert_eq!(config.name, Some("triangle"));
+        assert!(config.source.is_some());
+        assert_eq!(config.vertex_entry_point, "vs_main");
+        assert_eq!(config.fragment_entry_point, "fs_main");
+    }
+}

@@ -2,6 +2,8 @@ use std::sync::{Arc, Mutex};
 
 use log::{error, info};
 
+use super::{Shader, ShaderConfig};
+
 /// [`Gpu`] holds the WebGPU device and its resources.
 #[derive(Debug)]
 pub struct Gpu {
@@ -22,6 +24,9 @@ pub struct Gpu {
 
     /// A window handle.
     pub window: Arc<winit::window::Window>,
+
+    /// FIXME: temporary shader
+    shader: Option<Shader>,
 }
 
 impl Gpu {
@@ -76,13 +81,22 @@ impl Gpu {
 
         surface.configure(&device, &surface_config);
 
-        Self {
+        let mut gpu = Self {
             device,
             queue,
             surface,
             surface_config: Mutex::new(surface_config),
             window,
-        }
+            shader: None,
+        };
+
+        // FIXME: temporary shader initialization
+        gpu.shader = Some(Shader::new(
+            &gpu,
+            ShaderConfig::new(include_str!("shaders/triangle.wgsl")),
+        ));
+
+        gpu
     }
 
     /// Retrieves the current display size from the window.
@@ -135,7 +149,7 @@ impl Gpu {
                 });
 
         {
-            let _render_pass = command_encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+            let mut render_pass = command_encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("ravia_engine"),
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                     view: &target_view,
@@ -149,6 +163,12 @@ impl Gpu {
                 occlusion_query_set: None,
                 timestamp_writes: None,
             });
+
+            // FIXME: temporary shader render pass
+            if let Some(shader) = &self.shader {
+                render_pass.set_pipeline(shader.pipeline());
+                render_pass.draw(0..3, 0..1);
+            }
         }
 
         self.queue.submit(std::iter::once(command_encoder.finish()));
