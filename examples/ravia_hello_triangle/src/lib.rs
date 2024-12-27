@@ -1,5 +1,4 @@
-#[cfg(target_arch = "wasm32")]
-use wasm_bindgen::prelude::*;
+use ravia_engine::prelude::*;
 
 fn init_log() {
     #[cfg(target_arch = "wasm32")]
@@ -23,7 +22,7 @@ fn init_log() {
 pub fn run() {
     init_log();
 
-    ravia_engine::boot(ravia_engine::engine::EngineConfig {
+    boot(EngineConfig {
         window_title: "Hello Triangle",
     });
 }

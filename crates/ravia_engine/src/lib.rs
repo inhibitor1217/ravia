@@ -13,3 +13,15 @@ pub fn boot(config: engine::EngineConfig) {
 
     engine::Engine::run(config);
 }
+
+pub mod prelude {
+    pub use crate::engine::*;
+    pub use crate::graphics::*;
+
+    pub use crate::boot;
+    pub use crate::ENGINE_NAME;
+    pub use crate::ENGINE_VERSION;
+
+    #[cfg(target_arch = "wasm32")]
+    pub use wasm_bindgen::prelude::*;
+}
