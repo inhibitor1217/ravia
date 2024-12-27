@@ -37,7 +37,7 @@ impl<'a> ShaderConfig<'a> {
     }
 }
 
-impl<'a> Default for ShaderConfig<'a> {
+impl Default for ShaderConfig<'_> {
     fn default() -> Self {
         Self {
             name: None,
