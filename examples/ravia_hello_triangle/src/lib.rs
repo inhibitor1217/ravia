@@ -1,11 +1,11 @@
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
 
-use log;
-
 fn init_log() {
     #[cfg(target_arch = "wasm32")]
     {
+        use log;
+
         std::panic::set_hook(Box::new(console_error_panic_hook::hook));
 
         let log_level = std::env::var("RUST_LOG").unwrap_or("info".to_string());
