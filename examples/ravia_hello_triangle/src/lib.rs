@@ -7,8 +7,12 @@ fn init_log() {
 
         std::panic::set_hook(Box::new(console_error_panic_hook::hook));
 
-        let log_level = std::env::var("RUST_LOG").unwrap_or("info".to_string());
-        let log_level = log_level.parse::<log::Level>().unwrap_or(log::Level::Info);
+        let profile = std::env::var("PROFILE").unwrap_or("dev".to_string());
+        let log_level = if profile == "dev" {
+            log::Level::Debug
+        } else {
+            log::Level::Info
+        };
         console_log::init_with_level(log_level).expect("Failed to initialize console logger");
     }
 

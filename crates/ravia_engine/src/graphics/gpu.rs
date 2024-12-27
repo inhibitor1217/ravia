@@ -1,6 +1,7 @@
 use std::sync::{Arc, Mutex};
 
 /// [`Gpu`] holds the WebGPU device and its resources.
+#[derive(Debug)]
 pub struct Gpu {
     /// A WebGPU device.
     pub device: wgpu::Device,

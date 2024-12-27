@@ -11,12 +11,13 @@ use winit::{
 use crate::graphics;
 
 /// Engine configuration.
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct EngineConfig {
     /// Window title.
     pub window_title: &'static str,
 }
 
+#[derive(Debug)]
 enum EngineState {
     Uninitialized(EngineConfig),
     Initialized(Engine),
@@ -37,6 +38,8 @@ impl EngineState {
 
 impl ApplicationHandler for EngineState {
     fn resumed(&mut self, event_loop: &winit::event_loop::ActiveEventLoop) {
+        debug!(target: "ravia_engine::engine_state", "Engine resumed, engine = {:?}", self);
+
         match self {
             EngineState::Uninitialized(_) => self.initialize(event_loop),
             EngineState::Initialized(_) => (),
@@ -49,7 +52,7 @@ impl ApplicationHandler for EngineState {
         window_id: winit::window::WindowId,
         event: winit::event::WindowEvent,
     ) {
-        trace!(target: "ravia_engine", "Window event: {:?}", event);
+        debug!(target: "ravia_engine::engine_state", "Window event: {:?}", event);
 
         let app = match self {
             EngineState::Uninitialized(_) => return,
@@ -62,11 +65,11 @@ impl ApplicationHandler for EngineState {
 
         match event {
             WindowEvent::CloseRequested => {
-                info!(target: "ravia_engine", "Window close requested, exiting.");
+                info!(target: "ravia_engine::engine_state", "Window close requested, exiting.");
                 event_loop.exit();
             }
             WindowEvent::Destroyed => {
-                info!(target: "ravia_engine", "Window destroyed, exiting.");
+                info!(target: "ravia_engine::engine_state", "Window destroyed, exiting.");
                 event_loop.exit();
             }
             _ => (),
@@ -75,6 +78,7 @@ impl ApplicationHandler for EngineState {
 }
 
 /// [`Engine`] contains the resources for the components of the engine.
+#[derive(Debug)]
 pub struct Engine {
     window: Arc<Window>,
     gpu: Arc<graphics::Gpu>,
@@ -94,11 +98,11 @@ impl Engine {
 
     /// Creates a new [`Engine`].
     fn new(event_loop: &ActiveEventLoop, config: &EngineConfig) -> Self {
-        debug!(target: "ravia_engine", "Initializing window");
+        debug!(target: "ravia_engine::engine", "Initializing window");
         let window = Self::init_window(event_loop, config);
         let window = Arc::new(window);
 
-        debug!(target: "ravia_engine", "Initializing WebGPU resources");
+        debug!(target: "ravia_engine::engine", "Initializing WebGPU resources");
         let gpu = pollster::block_on(graphics::Gpu::new(window.clone()));
         let gpu = Arc::new(gpu);
 
