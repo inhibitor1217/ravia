@@ -8,8 +8,8 @@ pub const ENGINE_NAME: &str = "ravia_engine";
 pub const ENGINE_VERSION: &str = "0.1.0";
 
 /// Starts the engine.
-pub fn boot() {
+pub fn boot(config: engine::EngineConfig) {
     log::info!(target: "ravia_engine", "Booting {} {}", ENGINE_NAME, ENGINE_VERSION);
 
-    engine::Engine::run();
+    engine::Engine::run(config);
 }

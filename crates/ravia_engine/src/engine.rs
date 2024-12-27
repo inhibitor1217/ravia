@@ -8,8 +8,15 @@ use winit::{
     window::Window,
 };
 
+/// Engine configuration.
+#[derive(Default)]
+pub struct EngineConfig {
+    /// Window title.
+    pub window_title: &'static str,
+}
+
 enum EngineState {
-    Uninitialized,
+    Uninitialized(EngineConfig),
     Initialized(Engine),
 }
 
@@ -18,8 +25,8 @@ impl EngineState {
     /// If the engine is already initialized, this function will panic.
     fn initialize(&mut self, event_loop: &ActiveEventLoop) {
         match self {
-            EngineState::Uninitialized => {
-                *self = EngineState::Initialized(Engine::new(event_loop));
+            EngineState::Uninitialized(config) => {
+                *self = EngineState::Initialized(Engine::new(event_loop, config));
             }
             EngineState::Initialized(_) => panic!("Engine already initialized"),
         }
@@ -29,7 +36,7 @@ impl EngineState {
 impl ApplicationHandler for EngineState {
     fn resumed(&mut self, event_loop: &winit::event_loop::ActiveEventLoop) {
         match self {
-            EngineState::Uninitialized => self.initialize(event_loop),
+            EngineState::Uninitialized(_) => self.initialize(event_loop),
             EngineState::Initialized(_) => (),
         }
     }
@@ -43,7 +50,7 @@ impl ApplicationHandler for EngineState {
         trace!(target: "ravia_engine", "Window event: {:?}", event);
 
         let app = match self {
-            EngineState::Uninitialized => return,
+            EngineState::Uninitialized(_) => return,
             EngineState::Initialized(app) => app,
         };
 
@@ -72,19 +79,20 @@ pub struct Engine {
 
 impl Engine {
     /// Initializes and runs the main event loop for the engine.
-    pub fn run() {
+    pub fn run(config: EngineConfig) {
         let event_loop = EventLoop::new().expect("Failed to create event loop");
         event_loop.set_control_flow(ControlFlow::Poll);
 
-        let mut engine_state = EngineState::Uninitialized;
+        let mut engine_state = EngineState::Uninitialized(config);
         event_loop
             .run_app(&mut engine_state)
             .expect("Failed to run main event loop");
     }
 
     /// Creates a new [`Engine`].
-    fn new(event_loop: &ActiveEventLoop) -> Self {
-        let window_attrs = Window::default_attributes();
+    fn new(event_loop: &ActiveEventLoop, config: &EngineConfig) -> Self {
+        let window_attrs = Window::default_attributes().with_title(config.window_title);
+
         let window = event_loop
             .create_window(window_attrs)
             .expect("Failed to create window");

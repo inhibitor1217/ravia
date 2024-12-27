@@ -23,5 +23,7 @@ fn init_log() {
 pub fn run() {
     init_log();
 
-    ravia_engine::boot();
+    ravia_engine::boot(ravia_engine::engine::EngineConfig {
+        window_title: "Hello Triangle",
+    });
 }
