@@ -1,3 +1,5 @@
 fn main() {
-    println!("Hello, world!");
+    env_logger::init();
+
+    ravia_engine::boot();
 }

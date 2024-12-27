@@ -1,4 +1,3 @@
-resolver = "2"
-
 [workspace]
 members = ["crates/ravia_engine", "examples/ravia_hello_triangle"]
+resolver = "2"
