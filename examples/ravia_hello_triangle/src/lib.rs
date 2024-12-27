@@ -6,14 +6,8 @@ fn init_log() {
         use log;
 
         std::panic::set_hook(Box::new(console_error_panic_hook::hook));
-
-        let profile = std::env::var("PROFILE").unwrap_or("dev".to_string());
-        let log_level = if profile == "dev" {
-            log::Level::Debug
-        } else {
-            log::Level::Info
-        };
-        console_log::init_with_level(log_level).expect("Failed to initialize console logger");
+        console_log::init_with_level(log::Level::Info)
+            .expect("Failed to initialize console logger");
     }
 
     #[cfg(not(target_arch = "wasm32"))]

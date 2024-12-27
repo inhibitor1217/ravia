@@ -83,6 +83,7 @@ impl ApplicationHandler<EngineEvent> for EngineState {
 
         match event {
             EngineEvent::Initialized(engine) => {
+                engine.request_frame();
                 *self = EngineState::Running(engine);
             }
         }
@@ -96,18 +97,22 @@ impl ApplicationHandler<EngineEvent> for EngineState {
     ) {
         debug!(target: "ravia_engine::engine_state", "Window event: {:?}", event);
 
-        let app = match self {
-            EngineState::Running(app) => app,
+        let engine = match self {
+            EngineState::Running(engine) => engine,
             _ => return,
         };
 
-        if app.window.id() != window_id {
+        if engine.window.id() != window_id {
             return;
         }
 
         match event {
+            WindowEvent::RedrawRequested => {
+                engine.request_frame();
+                engine.frame();
+            }
             WindowEvent::Resized(physical_size) => {
-                app.resize(physical_size.width, physical_size.height);
+                engine.resize(physical_size.width, physical_size.height);
             }
             WindowEvent::CloseRequested => {
                 info!(target: "ravia_engine::engine_state", "Window close requested, exiting.");
@@ -201,6 +206,16 @@ impl Engine {
     /// Handles the display resize.
     fn resize(&self, width: u32, height: u32) {
         self.gpu.resize(width, height);
+    }
+
+    /// Requests a new frame.
+    fn request_frame(&self) {
+        self.window.request_redraw();
+    }
+
+    /// Handles the single frame render.
+    fn frame(&self) {
+        self.gpu.render();
     }
 }
 
