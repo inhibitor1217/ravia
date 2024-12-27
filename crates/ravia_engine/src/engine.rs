@@ -58,9 +58,8 @@ impl ApplicationHandler<EngineEvent> for EngineState {
     fn resumed(&mut self, event_loop: &winit::event_loop::ActiveEventLoop) {
         debug!(target: "ravia_engine::engine_state", "Engine resumed, engine = {:?}", self);
 
-        match self {
-            EngineState::Created { .. } => self.initialize(event_loop),
-            _ => (),
+        if let EngineState::Created { .. } = self {
+            self.initialize(event_loop);
         }
     }
 
