@@ -1,4 +1,4 @@
-use super::gpu;
+use super::{gpu, Vertex};
 
 /// [`ShaderConfig`] holds the source, entry points and other configuration for a shader.
 #[derive(Debug)]
@@ -81,7 +81,8 @@ impl Shader {
                 vertex: wgpu::VertexState {
                     module: &shader_module,
                     entry_point: Some(config.vertex_entry_point),
-                    buffers: &[],
+                    // FIXME: temporary vertex buffer
+                    buffers: &[Vertex::desc()],
                     compilation_options: wgpu::PipelineCompilationOptions::default(),
                 },
                 fragment: Some(wgpu::FragmentState {

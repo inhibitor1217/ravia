@@ -12,7 +12,7 @@ use winit::{
 use crate::graphics;
 
 /// Engine configuration.
-#[derive(Clone, Debug)]
+#[derive(Clone, Copy, Debug)]
 pub struct EngineConfig {
     /// Window title.
     pub window_title: &'static str,

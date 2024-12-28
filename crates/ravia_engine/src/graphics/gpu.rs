@@ -1,8 +1,9 @@
 use std::sync::{Arc, Mutex};
 
 use log::{error, info};
+use wgpu::util::DeviceExt;
 
-use super::{Shader, ShaderConfig};
+use super::{Shader, ShaderConfig, Vertex};
 
 /// [`Gpu`] holds the WebGPU device and its resources.
 #[derive(Debug)]
@@ -27,6 +28,9 @@ pub struct Gpu {
 
     /// FIXME: temporary shader
     shader: Option<Shader>,
+
+    /// FIXME: temporary vertex buffer
+    vertex_buffer: Option<wgpu::Buffer>,
 }
 
 impl Gpu {
@@ -88,12 +92,35 @@ impl Gpu {
             surface_config: Mutex::new(surface_config),
             window,
             shader: None,
+            vertex_buffer: None,
         };
 
         // FIXME: temporary shader initialization
         gpu.shader = Some(Shader::new(
             &gpu,
             ShaderConfig::new(include_str!("shaders/triangle.wgsl")),
+        ));
+
+        // FIXME: temporary vertex buffer initialization
+        gpu.vertex_buffer = Some(gpu.device.create_buffer_init(
+            &wgpu::util::BufferInitDescriptor {
+                label: None,
+                contents: bytemuck::cast_slice(&[
+                    Vertex {
+                        position: [0.0, 0.5, 0.0],
+                        color: [1.0, 0.0, 0.0],
+                    },
+                    Vertex {
+                        position: [-0.5, -0.5, 0.0],
+                        color: [0.0, 1.0, 0.0],
+                    },
+                    Vertex {
+                        position: [0.5, -0.5, 0.0],
+                        color: [0.0, 0.0, 1.0],
+                    },
+                ]),
+                usage: wgpu::BufferUsages::VERTEX,
+            },
         ));
 
         gpu
@@ -166,8 +193,11 @@ impl Gpu {
 
             // FIXME: temporary shader render pass
             if let Some(shader) = &self.shader {
-                render_pass.set_pipeline(shader.pipeline());
-                render_pass.draw(0..3, 0..1);
+                if let Some(vertex_buffer) = &self.vertex_buffer {
+                    render_pass.set_pipeline(shader.pipeline());
+                    render_pass.set_vertex_buffer(0, vertex_buffer.slice(..));
+                    render_pass.draw(0..3, 0..1);
+                }
             }
         }
 
