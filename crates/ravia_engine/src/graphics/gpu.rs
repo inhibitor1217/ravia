@@ -112,16 +112,20 @@ impl Gpu {
                 label: None,
                 contents: bytemuck::cast_slice(&[
                     Vertex2DColor {
-                        position: [0.0, 0.5],
-                        data: [1.0, 0.0, 0.0],
-                    },
-                    Vertex2DColor {
                         position: [-0.5, -0.5],
                         data: [0.0, 1.0, 0.0],
                     },
                     Vertex2DColor {
                         position: [0.5, -0.5],
                         data: [0.0, 0.0, 1.0],
+                    },
+                    Vertex2DColor {
+                        position: [-0.5, 0.5],
+                        data: [1.0, 0.0, 0.0],
+                    },
+                    Vertex2DColor {
+                        position: [0.5, 0.5],
+                        data: [0.0, 1.0, 0.0],
                     },
                 ]),
                 usage: wgpu::BufferUsages::VERTEX,
@@ -133,7 +137,7 @@ impl Gpu {
             gpu.device
                 .create_buffer_init(&wgpu::util::BufferInitDescriptor {
                     label: None,
-                    contents: bytemuck::cast_slice(&[0, 1, 2]),
+                    contents: bytemuck::cast_slice(&[2, 0, 3, 3, 0, 1]),
                     usage: wgpu::BufferUsages::INDEX,
                 }),
         );
@@ -214,7 +218,7 @@ impl Gpu {
                         render_pass.set_vertex_buffer(0, vertex_buffer.slice(..));
                         render_pass
                             .set_index_buffer(index_buffer.slice(..), wgpu::IndexFormat::Uint32);
-                        render_pass.draw_indexed(0..3, 0, 0..1);
+                        render_pass.draw_indexed(0..6, 0, 0..1);
                     }
                 }
             }
