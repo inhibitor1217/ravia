@@ -6,7 +6,7 @@ pub struct VertexBufferConfig<'a> {
     attribute_formats: &'a [wgpu::VertexFormat],
 }
 
-impl<'a> VertexBufferConfig<'a> {
+impl VertexBufferConfig<'_> {
     /// Creates a new [`VertexBufferConfig`] from a vertex type.
     pub fn vertex<V: Vertex>() -> Self {
         Self {
@@ -90,7 +90,7 @@ impl Shader {
                 let mut offset = 0;
                 for (i, format) in vb_config.attribute_formats.iter().enumerate() {
                     vertex_buffer_attributes.push(wgpu::VertexAttribute {
-                        format: format.clone(),
+                        format: *format,
                         offset,
                         shader_location: i as u32,
                     });

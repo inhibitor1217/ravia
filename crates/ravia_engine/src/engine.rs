@@ -55,7 +55,7 @@ impl EngineState {
     fn initialize(&mut self, event_loop: &ActiveEventLoop) {
         match std::mem::take(self) {
             EngineState::Created { config, proxy } => {
-                let window = Engine::new_window(event_loop, config.clone());
+                let window = Engine::new_window(event_loop, config);
                 resolve_future(async move {
                     let engine = Engine::new(window, config).await;
                     proxy
