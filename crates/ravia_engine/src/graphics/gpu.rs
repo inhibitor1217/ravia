@@ -3,7 +3,7 @@ use std::sync::{Arc, Mutex};
 use log::{error, info};
 use wgpu::util::DeviceExt;
 
-use super::{Shader, ShaderConfig, Vertex};
+use super::{Shader, ShaderConfig, Vertex2DColor, VertexBufferConfig};
 
 /// [`Gpu`] holds the WebGPU device and its resources.
 #[derive(Debug)]
@@ -98,7 +98,8 @@ impl Gpu {
         // FIXME: temporary shader initialization
         gpu.shader = Some(Shader::new(
             &gpu,
-            ShaderConfig::new(include_str!("shaders/triangle.wgsl")),
+            ShaderConfig::new(include_str!("shaders/triangle.wgsl"))
+                .with_vertex_buffer_config(VertexBufferConfig::vertex::<Vertex2DColor>()),
         ));
 
         // FIXME: temporary vertex buffer initialization
@@ -106,17 +107,17 @@ impl Gpu {
             &wgpu::util::BufferInitDescriptor {
                 label: None,
                 contents: bytemuck::cast_slice(&[
-                    Vertex {
-                        position: [0.0, 0.5, 0.0],
-                        color: [1.0, 0.0, 0.0],
+                    Vertex2DColor {
+                        position: [0.0, 0.5],
+                        data: [1.0, 0.0, 0.0],
                     },
-                    Vertex {
-                        position: [-0.5, -0.5, 0.0],
-                        color: [0.0, 1.0, 0.0],
+                    Vertex2DColor {
+                        position: [-0.5, -0.5],
+                        data: [0.0, 1.0, 0.0],
                     },
-                    Vertex {
-                        position: [0.5, -0.5, 0.0],
-                        color: [0.0, 0.0, 1.0],
+                    Vertex2DColor {
+                        position: [0.5, -0.5],
+                        data: [0.0, 0.0, 1.0],
                     },
                 ]),
                 usage: wgpu::BufferUsages::VERTEX,

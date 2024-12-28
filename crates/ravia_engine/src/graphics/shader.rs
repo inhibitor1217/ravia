@@ -1,25 +1,28 @@
 use super::{gpu, Vertex};
 
+/// Specifies the vertex buffer configuration.
+#[derive(Debug)]
+pub struct VertexBufferConfig<'a> {
+    attribute_formats: &'a [wgpu::VertexFormat],
+}
+
+impl<'a> VertexBufferConfig<'a> {
+    /// Creates a new [`VertexBufferConfig`] from a vertex type.
+    pub fn vertex<V: Vertex>() -> Self {
+        Self {
+            attribute_formats: V::ATTRIBUTE_FORMATS,
+        }
+    }
+}
+
 /// [`ShaderConfig`] holds the source, entry points and other configuration for a shader.
 #[derive(Debug)]
 pub struct ShaderConfig<'a> {
     pub name: Option<&'a str>,
     pub source: Option<wgpu::ShaderModuleDescriptor<'a>>,
     pub vertex_entry_point: &'static str,
+    pub vertex_buffer: Option<VertexBufferConfig<'a>>,
     pub fragment_entry_point: &'static str,
-}
-
-/// Creates a [`ShaderConfig`] from a WGSL shader source file.
-#[macro_export]
-macro_rules! shader_config {
-    ($path:literal) => {
-        ShaderConfig::new(include_str!($path))
-    };
-    ($path:literal, $name:expr) => {{
-        let mut config = ShaderConfig::new(include_str!($path));
-        config.name = Some($name);
-        config
-    }};
 }
 
 impl<'a> ShaderConfig<'a> {
@@ -32,8 +35,15 @@ impl<'a> ShaderConfig<'a> {
                 source: wgpu::ShaderSource::Wgsl(source.into()),
             }),
             vertex_entry_point: "vs_main",
+            vertex_buffer: None,
             fragment_entry_point: "fs_main",
         }
+    }
+
+    /// Adds a vertex buffer configuration to the shader config.
+    pub fn with_vertex_buffer_config(mut self, config: VertexBufferConfig<'a>) -> Self {
+        self.vertex_buffer = Some(config);
+        self
     }
 }
 
@@ -43,6 +53,7 @@ impl Default for ShaderConfig<'_> {
             name: None,
             source: None,
             vertex_entry_point: "vs_main",
+            vertex_buffer: None,
             fragment_entry_point: "fs_main",
         }
     }
@@ -73,6 +84,29 @@ impl Shader {
                     push_constant_ranges: &[],
                 });
 
+        let mut vertex_buffer_attributes = vec![];
+        let vertex_buffer_layout = {
+            if let Some(vb_config) = config.vertex_buffer {
+                let mut offset = 0;
+                for (i, format) in vb_config.attribute_formats.iter().enumerate() {
+                    vertex_buffer_attributes.push(wgpu::VertexAttribute {
+                        format: format.clone(),
+                        offset,
+                        shader_location: i as u32,
+                    });
+                    offset += format.size();
+                }
+
+                vec![wgpu::VertexBufferLayout {
+                    array_stride: offset,
+                    step_mode: wgpu::VertexStepMode::Vertex,
+                    attributes: &vertex_buffer_attributes,
+                }]
+            } else {
+                vec![]
+            }
+        };
+
         let render_pipeline = gpu
             .device
             .create_render_pipeline(&wgpu::RenderPipelineDescriptor {
@@ -81,8 +115,7 @@ impl Shader {
                 vertex: wgpu::VertexState {
                     module: &shader_module,
                     entry_point: Some(config.vertex_entry_point),
-                    // FIXME: temporary vertex buffer
-                    buffers: &[Vertex::desc()],
+                    buffers: &vertex_buffer_layout,
                     compilation_options: wgpu::PipelineCompilationOptions::default(),
                 },
                 fragment: Some(wgpu::FragmentState {
@@ -118,20 +151,5 @@ impl Shader {
     /// Returns the underlying [`wgpu::RenderPipeline`].
     pub fn pipeline(&self) -> &wgpu::RenderPipeline {
         &self.pipeline
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::prelude::*;
-
-    #[test]
-    fn can_load_shader_config_from_file() {
-        let config = crate::shader_config!("shaders/triangle.wgsl", "triangle");
-
-        assert_eq!(config.name, Some("triangle"));
-        assert!(config.source.is_some());
-        assert_eq!(config.vertex_entry_point, "vs_main");
-        assert_eq!(config.fragment_entry_point, "fs_main");
     }
 }
