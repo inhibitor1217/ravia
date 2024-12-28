@@ -31,6 +31,9 @@ pub struct Gpu {
 
     /// FIXME: temporary vertex buffer
     vertex_buffer: Option<wgpu::Buffer>,
+
+    /// FIXME: temporary index buffer
+    index_buffer: Option<wgpu::Buffer>,
 }
 
 impl Gpu {
@@ -93,13 +96,14 @@ impl Gpu {
             window,
             shader: None,
             vertex_buffer: None,
+            index_buffer: None,
         };
 
         // FIXME: temporary shader initialization
         gpu.shader = Some(Shader::new(
             &gpu,
             ShaderConfig::new(include_str!("shaders/triangle.wgsl"))
-                .with_vertex_buffer_config(VertexBufferConfig::vertex::<Vertex2DColor>()),
+                .with_vertex_buffer_config(VertexBufferConfig::new::<Vertex2DColor>()),
         ));
 
         // FIXME: temporary vertex buffer initialization
@@ -123,6 +127,16 @@ impl Gpu {
                 usage: wgpu::BufferUsages::VERTEX,
             },
         ));
+
+        // FIXME: temporary index buffer initialization
+        gpu.index_buffer = Some(
+            gpu.device
+                .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: None,
+                    contents: bytemuck::cast_slice(&[0, 1, 2]),
+                    usage: wgpu::BufferUsages::INDEX,
+                }),
+        );
 
         gpu
     }
@@ -195,9 +209,13 @@ impl Gpu {
             // FIXME: temporary shader render pass
             if let Some(shader) = &self.shader {
                 if let Some(vertex_buffer) = &self.vertex_buffer {
-                    render_pass.set_pipeline(shader.pipeline());
-                    render_pass.set_vertex_buffer(0, vertex_buffer.slice(..));
-                    render_pass.draw(0..3, 0..1);
+                    if let Some(index_buffer) = &self.index_buffer {
+                        render_pass.set_pipeline(shader.pipeline());
+                        render_pass.set_vertex_buffer(0, vertex_buffer.slice(..));
+                        render_pass
+                            .set_index_buffer(index_buffer.slice(..), wgpu::IndexFormat::Uint32);
+                        render_pass.draw_indexed(0..3, 0, 0..1);
+                    }
                 }
             }
         }

@@ -8,7 +8,7 @@ pub struct VertexBufferConfig<'a> {
 
 impl VertexBufferConfig<'_> {
     /// Creates a new [`VertexBufferConfig`] from a vertex type.
-    pub fn vertex<V: Vertex>() -> Self {
+    pub fn new<V: Vertex>() -> Self {
         Self {
             attribute_formats: V::ATTRIBUTE_FORMATS,
         }
@@ -76,13 +76,13 @@ impl Shader {
                 .expect("Cannot create shader module without source"),
         );
 
-        let render_pipeline_layout =
-            gpu.device
-                .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-                    label: None,
-                    bind_group_layouts: &[],
-                    push_constant_ranges: &[],
-                });
+        let pipeline_layout = gpu
+            .device
+            .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+                label: None,
+                bind_group_layouts: &[],
+                push_constant_ranges: &[],
+            });
 
         let mut vertex_buffer_attributes = vec![];
         let vertex_buffer_layout = {
@@ -107,11 +107,11 @@ impl Shader {
             }
         };
 
-        let render_pipeline = gpu
+        let pipeline = gpu
             .device
             .create_render_pipeline(&wgpu::RenderPipelineDescriptor {
                 label: None,
-                layout: Some(&render_pipeline_layout),
+                layout: Some(&pipeline_layout),
                 vertex: wgpu::VertexState {
                     module: &shader_module,
                     entry_point: Some(config.vertex_entry_point),
@@ -143,9 +143,7 @@ impl Shader {
                 cache: None,
             });
 
-        Self {
-            pipeline: render_pipeline,
-        }
+        Self { pipeline }
     }
 
     /// Returns the underlying [`wgpu::RenderPipeline`].
