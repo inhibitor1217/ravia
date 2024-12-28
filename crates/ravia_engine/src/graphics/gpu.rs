@@ -26,8 +26,8 @@ pub struct Gpu {
     /// A window handle.
     pub window: Arc<winit::window::Window>,
 
-    /// FIXME: temporary shader
-    shader: Option<Shader>,
+    /// A collection of GPU assets that are loaded on initialization.
+    asset: Option<GpuAsset>,
 
     /// FIXME: temporary vertex buffer
     vertex_buffer: Option<wgpu::Buffer>,
@@ -94,17 +94,12 @@ impl Gpu {
             surface,
             surface_config: Mutex::new(surface_config),
             window,
-            shader: None,
+            asset: None,
             vertex_buffer: None,
             index_buffer: None,
         };
 
-        // FIXME: temporary shader initialization
-        gpu.shader = Some(Shader::new(
-            &gpu,
-            ShaderConfig::new(include_str!("shaders/triangle.wgsl"))
-                .with_vertex_buffer_config(VertexBufferConfig::new::<Vertex2DColor>()),
-        ));
+        gpu.asset = Some(GpuAsset::load(&gpu));
 
         // FIXME: temporary vertex buffer initialization
         gpu.vertex_buffer = Some(gpu.device.create_buffer_init(
@@ -210,21 +205,44 @@ impl Gpu {
                 timestamp_writes: None,
             });
 
+            let asset = self
+                .asset
+                .as_ref()
+                .expect("GPU asset not loaded, proper initialization is required");
+
             // FIXME: temporary shader render pass
-            if let Some(shader) = &self.shader {
-                if let Some(vertex_buffer) = &self.vertex_buffer {
-                    if let Some(index_buffer) = &self.index_buffer {
-                        render_pass.set_pipeline(shader.pipeline());
-                        render_pass.set_vertex_buffer(0, vertex_buffer.slice(..));
-                        render_pass
-                            .set_index_buffer(index_buffer.slice(..), wgpu::IndexFormat::Uint32);
-                        render_pass.draw_indexed(0..6, 0, 0..1);
-                    }
+            if let Some(vertex_buffer) = &self.vertex_buffer {
+                if let Some(index_buffer) = &self.index_buffer {
+                    render_pass.set_pipeline(asset.default_shader.pipeline());
+                    render_pass.set_vertex_buffer(0, vertex_buffer.slice(..));
+                    render_pass.set_index_buffer(index_buffer.slice(..), wgpu::IndexFormat::Uint32);
+                    render_pass.draw_indexed(0..6, 0, 0..1);
                 }
             }
         }
 
         self.queue.submit(std::iter::once(command_encoder.finish()));
         surface_texture.present();
+    }
+}
+
+/// A collection of resources to be loaded for GPU.
+#[derive(Debug)]
+struct GpuAsset {
+    /// Default shader to use for the rendering pipeline.
+    default_shader: Shader,
+}
+
+impl GpuAsset {
+    /// Loads the GPU assets.
+    pub fn load(gpu: &Gpu) -> Self {
+        Self {
+            default_shader: Shader::new(
+                gpu,
+                // For now, we use a simple shader that draws a triangle.
+                ShaderConfig::new(include_str!("shaders/triangle.wgsl"))
+                    .with_vertex_buffer_config(VertexBufferConfig::new::<Vertex2DColor>()),
+            ),
+        }
     }
 }
