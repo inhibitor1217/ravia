@@ -1,9 +1,10 @@
 use std::sync::{Arc, Mutex};
 
 use log::{error, info};
-use wgpu::util::DeviceExt;
 
-use super::{Shader, ShaderConfig, Vertex2DColor, VertexBufferConfig};
+use crate::ecs::{self, IntoQuery};
+
+use super::{Mesh, Shader, ShaderConfig, Vertex2DColor, VertexBufferConfig};
 
 /// [`Gpu`] holds the WebGPU device and its resources.
 #[derive(Debug)]
@@ -28,12 +29,6 @@ pub struct Gpu {
 
     /// A collection of GPU assets that are loaded on initialization.
     asset: Option<GpuAsset>,
-
-    /// FIXME: temporary vertex buffer
-    vertex_buffer: Option<wgpu::Buffer>,
-
-    /// FIXME: temporary index buffer
-    index_buffer: Option<wgpu::Buffer>,
 }
 
 impl Gpu {
@@ -95,47 +90,9 @@ impl Gpu {
             surface_config: Mutex::new(surface_config),
             window,
             asset: None,
-            vertex_buffer: None,
-            index_buffer: None,
         };
 
         gpu.asset = Some(GpuAsset::load(&gpu));
-
-        // FIXME: temporary vertex buffer initialization
-        gpu.vertex_buffer = Some(gpu.device.create_buffer_init(
-            &wgpu::util::BufferInitDescriptor {
-                label: None,
-                contents: bytemuck::cast_slice(&[
-                    Vertex2DColor {
-                        position: [-0.5, -0.5],
-                        data: [0.0, 1.0, 0.0],
-                    },
-                    Vertex2DColor {
-                        position: [0.5, -0.5],
-                        data: [0.0, 0.0, 1.0],
-                    },
-                    Vertex2DColor {
-                        position: [-0.5, 0.5],
-                        data: [1.0, 0.0, 0.0],
-                    },
-                    Vertex2DColor {
-                        position: [0.5, 0.5],
-                        data: [0.0, 1.0, 0.0],
-                    },
-                ]),
-                usage: wgpu::BufferUsages::VERTEX,
-            },
-        ));
-
-        // FIXME: temporary index buffer initialization
-        gpu.index_buffer = Some(
-            gpu.device
-                .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                    label: None,
-                    contents: bytemuck::cast_slice(&[2, 0, 3, 3, 0, 1]),
-                    usage: wgpu::BufferUsages::INDEX,
-                }),
-        );
 
         gpu
     }
@@ -158,7 +115,7 @@ impl Gpu {
     ///
     /// For now, this procedure contains all the details about wgpu render pipeline specific to
     /// surface texture. We hope to move this to a separate module in the future.
-    pub fn render(&self) {
+    pub fn render(&self, world: &mut ecs::World) {
         let surface_texture = match self.surface.get_current_texture() {
             Ok(surface_texture) => surface_texture,
             Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
@@ -210,14 +167,16 @@ impl Gpu {
                 .as_ref()
                 .expect("GPU asset not loaded, proper initialization is required");
 
-            // FIXME: temporary shader render pass
-            if let Some(vertex_buffer) = &self.vertex_buffer {
-                if let Some(index_buffer) = &self.index_buffer {
-                    render_pass.set_pipeline(asset.default_shader.pipeline());
-                    render_pass.set_vertex_buffer(0, vertex_buffer.slice(..));
-                    render_pass.set_index_buffer(index_buffer.slice(..), wgpu::IndexFormat::Uint32);
-                    render_pass.draw_indexed(0..6, 0, 0..1);
-                }
+            let mut renderables_query = <&mut Mesh<Vertex2DColor>>::query();
+
+            // For now, we simply iterate over all the renderable entities and render them in a separate draw call.
+            render_pass.set_pipeline(asset.default_shader.pipeline());
+            for mesh in renderables_query.iter_mut(world) {
+                let buffers = mesh.maybe_allocate(self);
+                render_pass.set_vertex_buffer(0, buffers.vertex_buffer.slice(..));
+                render_pass
+                    .set_index_buffer(buffers.index_buffer.slice(..), wgpu::IndexFormat::Uint32);
+                render_pass.draw_indexed(0..6, 0, 0..1);
             }
         }
 

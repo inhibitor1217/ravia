@@ -22,6 +22,33 @@ pub fn run() {
 
     boot(EngineConfig {
         window_title: "Hello Triangle",
+        init_world: init_world,
         ..Default::default()
     });
+}
+
+fn init_world(world: &mut World) {
+    world.push(
+        (Mesh::<Vertex2DColor>::new(
+            vec![
+                Vertex2DColor {
+                    position: [-0.5, -0.5],
+                    data: [0.0, 1.0, 0.0],
+                },
+                Vertex2DColor {
+                    position: [0.5, -0.5],
+                    data: [0.0, 0.0, 1.0],
+                },
+                Vertex2DColor {
+                    position: [-0.5, 0.5],
+                    data: [1.0, 0.0, 0.0],
+                },
+                Vertex2DColor {
+                    position: [0.5, 0.5],
+                    data: [0.0, 1.0, 0.0],
+                },
+            ],
+            vec![2, 0, 3, 3, 0, 1],
+        )),
+    );
 }

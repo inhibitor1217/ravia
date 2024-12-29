@@ -9,7 +9,10 @@ use winit::{
     window::Window,
 };
 
-use crate::graphics;
+use crate::{ecs, graphics};
+
+/// A function that initializes the world.
+type InitWorld = fn(&mut ecs::World);
 
 /// Engine configuration.
 #[derive(Clone, Copy, Debug)]
@@ -20,6 +23,8 @@ pub struct EngineConfig {
     pub display_width: u32,
     /// Display height. Only effective in native mode.
     pub display_height: u32,
+    /// Specifies how the world is initialized.
+    pub init_world: InitWorld,
 }
 
 impl Default for EngineConfig {
@@ -28,6 +33,7 @@ impl Default for EngineConfig {
             window_title: "",
             display_width: 1024,
             display_height: 720,
+            init_world: |_| {},
         }
     }
 }
@@ -131,6 +137,7 @@ impl ApplicationHandler<EngineEvent> for EngineState {
 #[derive(Debug)]
 pub struct Engine {
     window: Arc<Window>,
+    world: ecs::World,
     gpu: Arc<graphics::Gpu>,
 }
 
@@ -162,14 +169,17 @@ impl Engine {
     }
 
     /// Creates a new [`Engine`].
-    async fn new(window: Window, _config: EngineConfig) -> Self {
+    async fn new(window: Window, config: EngineConfig) -> Self {
         let window = Arc::new(window);
+
+        let mut world = ecs::World::default();
+        (config.init_world)(&mut world);
 
         debug!(target: "ravia_engine::engine", "Initializing WebGPU resources");
         let gpu = graphics::Gpu::new(window.clone()).await;
         let gpu = Arc::new(gpu);
 
-        Self { window, gpu }
+        Self { window, gpu, world }
     }
 
     /// Creates a new [`Window`].
@@ -214,8 +224,8 @@ impl Engine {
     }
 
     /// Handles the single frame render.
-    fn frame(&self) {
-        self.gpu.render();
+    fn frame(&mut self) {
+        self.gpu.render(&mut self.world);
     }
 }
 

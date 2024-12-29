@@ -16,6 +16,7 @@ pub fn boot(config: engine::EngineConfig) {
 }
 
 pub mod prelude {
+    pub use crate::ecs::*;
     pub use crate::engine::*;
     pub use crate::graphics::*;
 
