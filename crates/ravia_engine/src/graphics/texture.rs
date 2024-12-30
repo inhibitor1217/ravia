@@ -2,7 +2,7 @@ use std::ops::Deref;
 
 use wgpu::util::DeviceExt;
 
-use super::gpu;
+use super::{gpu, Uniform, UniformType};
 
 /// A trait for texture types.
 pub trait Texture {
@@ -16,6 +16,50 @@ pub trait Texture {
 pub struct Texture2DConfig<D: Deref<Target = [u8]>> {
     pub size: (u32, u32),
     pub data: D,
+    pub filter_mode: TextureFilterMode,
+}
+
+/// Filter mode for the texture.
+#[derive(Debug, Clone, Copy)]
+pub enum TextureFilterMode {
+    /// Nearest neighbor sampling.
+    Point,
+    /// Bilinear interpolation in uv space.
+    Bilinear,
+    /// Trilinear interpolation in uv space and mipmap levels.
+    Trilinear,
+}
+
+impl Default for TextureFilterMode {
+    fn default() -> Self {
+        Self::Bilinear
+    }
+}
+
+impl TextureFilterMode {
+    fn mag_filter(&self) -> wgpu::FilterMode {
+        match self {
+            Self::Point => wgpu::FilterMode::Nearest,
+            Self::Bilinear => wgpu::FilterMode::Linear,
+            Self::Trilinear => wgpu::FilterMode::Linear,
+        }
+    }
+
+    fn min_filter(&self) -> wgpu::FilterMode {
+        match self {
+            Self::Point => wgpu::FilterMode::Nearest,
+            Self::Bilinear => wgpu::FilterMode::Linear,
+            Self::Trilinear => wgpu::FilterMode::Linear,
+        }
+    }
+
+    fn mipmap_filter(&self) -> wgpu::FilterMode {
+        match self {
+            Self::Point => wgpu::FilterMode::Nearest,
+            Self::Bilinear => wgpu::FilterMode::Nearest,
+            Self::Trilinear => wgpu::FilterMode::Linear,
+        }
+    }
 }
 
 /// A 2D texture.
@@ -55,14 +99,14 @@ impl Texture2D {
             address_mode_u: wgpu::AddressMode::ClampToEdge,
             address_mode_v: wgpu::AddressMode::ClampToEdge,
             address_mode_w: wgpu::AddressMode::ClampToEdge,
-            mag_filter: wgpu::FilterMode::Linear,
-            min_filter: wgpu::FilterMode::Nearest,
-            mipmap_filter: wgpu::FilterMode::Nearest,
+            mag_filter: config.filter_mode.mag_filter(),
+            min_filter: config.filter_mode.min_filter(),
+            mipmap_filter: config.filter_mode.mipmap_filter(),
             ..Default::default()
         });
 
         let bind_group = gpu.device.create_bind_group(&wgpu::BindGroupDescriptor {
-            layout: &gpu.asset().default_texture_2d_bind_group_layout,
+            layout: &gpu.default_bind_group_layouts.texture_2d,
             entries: &[
                 wgpu::BindGroupEntry {
                     binding: 0,
@@ -82,11 +126,6 @@ impl Texture2D {
             _sampler: sampler,
             bind_group,
         }
-    }
-
-    /// Retrieves the bind group of the texture.
-    pub(super) fn bind_group(&self) -> &wgpu::BindGroup {
-        &self.bind_group
     }
 }
 
@@ -109,4 +148,12 @@ impl Texture for Texture2D {
             count: None,
         },
     ];
+}
+
+impl Uniform for Texture2D {
+    const TYPE: UniformType = UniformType::Texture2D;
+
+    fn bind_group(&self) -> &wgpu::BindGroup {
+        &self.bind_group
+    }
 }

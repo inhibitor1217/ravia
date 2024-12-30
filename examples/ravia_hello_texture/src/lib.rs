@@ -23,11 +23,6 @@ pub fn run() {
     boot(EngineConfig {
         window_title: "Hello Texture",
         init_world,
-        gpu: GpuConfig {
-            default_shader: ShaderConfig::new(include_str!("triangle_tex.wgsl"))
-                .with_vertex_type::<Vertex2DTexture>()
-                .with_bound_texture::<Texture2D>(),
-        },
         ..Default::default()
     });
 }

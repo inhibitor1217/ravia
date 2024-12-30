@@ -1,4 +1,4 @@
-use super::{gpu, Texture, Vertex};
+use super::{gpu, UniformType, Vertex};
 
 /// [`ShaderConfig`] holds the source, entry points and other configuration for a shader.
 #[derive(Clone, Copy, Debug)]
@@ -7,7 +7,7 @@ pub struct ShaderConfig<'a> {
     vertex_entry_point: &'static str,
     vertex_attribute_formats: &'a [wgpu::VertexFormat],
     fragment_entry_point: &'static str,
-    bind_group_layout_entries: &'a [wgpu::BindGroupLayoutEntry],
+    uniforms: &'a [UniformType],
 }
 
 impl<'a> ShaderConfig<'a> {
@@ -18,7 +18,7 @@ impl<'a> ShaderConfig<'a> {
             vertex_entry_point: "vs_main",
             vertex_attribute_formats: &[],
             fragment_entry_point: "fs_main",
-            bind_group_layout_entries: &[],
+            uniforms: &[],
         }
     }
 
@@ -28,9 +28,9 @@ impl<'a> ShaderConfig<'a> {
         self
     }
 
-    /// Adds a bind group layout to the shader config.
-    pub fn with_bound_texture<T: Texture>(mut self) -> Self {
-        self.bind_group_layout_entries = T::BIND_GROUP_LAYOUT_ENTRIES;
+    /// Specifies the uniforms.
+    pub fn with_uniforms(mut self, uniforms: &'a [UniformType]) -> Self {
+        self.uniforms = uniforms;
         self
     }
 }
@@ -42,7 +42,7 @@ impl Default for ShaderConfig<'_> {
             vertex_entry_point: "vs_main",
             vertex_attribute_formats: &[],
             fragment_entry_point: "fs_main",
-            bind_group_layout_entries: &[],
+            uniforms: &[],
         }
     }
 }
@@ -69,7 +69,12 @@ impl Shader {
             .device
             .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: None,
-                bind_group_layouts: &[], // FIXME: Add bind group layouts
+                bind_group_layouts: config
+                    .uniforms
+                    .iter()
+                    .map(|uniform_type| gpu.default_bind_group_layouts.uniform_layout(uniform_type))
+                    .collect::<Vec<_>>()
+                    .as_slice(),
                 push_constant_ranges: &[],
             });
 

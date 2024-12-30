@@ -4,14 +4,14 @@ use log::{error, info};
 
 use crate::ecs::{self, IntoQuery};
 
-use super::{Mesh, Shader, ShaderConfig, Texture, Texture2D, Texture2DConfig, Vertex2DColor};
+use super::{
+    Mesh, Shader, ShaderConfig, Texture, Texture2D, Texture2DConfig, TextureFilterMode, Uniform,
+    UniformType, Vertex2DColor, Vertex2DTexture,
+};
 
 /// Configuration for the GPU.
 #[derive(Clone, Copy, Debug, Default)]
-pub struct GpuConfig {
-    /// Default shader configuration.
-    pub default_shader: ShaderConfig<'static>,
-}
+pub struct GpuConfig {}
 
 /// [`Gpu`] holds the WebGPU device and its resources.
 #[derive(Debug)]
@@ -33,6 +33,9 @@ pub struct Gpu {
 
     /// A window handle.
     pub window: Arc<winit::window::Window>,
+
+    /// A collection of default bind group layouts.
+    pub(super) default_bind_group_layouts: GpuDefaultBindGroupLayouts,
 
     /// A collection of GPU assets that are loaded on initialization.
     pub(super) asset: Option<GpuAsset>,
@@ -90,12 +93,15 @@ impl Gpu {
 
         surface.configure(&device, &surface_config);
 
+        let default_bind_group_layouts = GpuDefaultBindGroupLayouts::new(&device);
+
         let mut gpu = Self {
             device,
             queue,
             surface,
             surface_config: Mutex::new(surface_config),
             window,
+            default_bind_group_layouts,
             asset: None,
         };
 
@@ -169,21 +175,36 @@ impl Gpu {
                 timestamp_writes: None,
             });
 
-            let mut renderables_query = <&mut Mesh<Vertex2DColor>>::query();
+            // Draw call using triangle shader.
+            {
+                let mut renderables_query = <&mut Mesh<Vertex2DColor>>::query();
 
-            // For now, we simply iterate over all the renderable components and render them in separate draw calls.
-            // Later we will optimize this by allocating a single buffer for multiple meshes and using a single draw call.
-            render_pass.set_pipeline(self.asset().default_shader.pipeline());
-            for mesh in renderables_query.iter_mut(world) {
-                let buffers = mesh.allocate_buffers(self);
+                render_pass.set_pipeline(self.asset().triangle_shader.pipeline());
+                for mesh in renderables_query.iter_mut(world) {
+                    let buffers = mesh.allocate_buffers(self);
+                    render_pass.set_vertex_buffer(0, buffers.vertex_slice());
+                    render_pass.set_index_buffer(buffers.index_slice(), wgpu::IndexFormat::Uint32);
+                    render_pass.draw_indexed(mesh.indices(), 0, 0..1);
+                }
+            }
 
-                // FIXME: we are temporarily binding a binding group 0 to the preset texture.
-                // We will need to change this to a more flexible approach in the future.
-                render_pass.set_bind_group(0, self.asset().default_texture_2d.bind_group(), &[]);
+            // Draw call using triangle shader with texture bindings.
+            {
+                let mut renderables_query = <&mut Mesh<Vertex2DTexture>>::query();
 
-                render_pass.set_vertex_buffer(0, buffers.vertex_slice());
-                render_pass.set_index_buffer(buffers.index_slice(), wgpu::IndexFormat::Uint32);
-                render_pass.draw_indexed(mesh.indices(), 0, 0..1);
+                render_pass.set_pipeline(self.asset().triangle_tex_shader.pipeline());
+                for mesh in renderables_query.iter_mut(world) {
+                    let buffers = mesh.allocate_buffers(self);
+                    render_pass.set_vertex_buffer(0, buffers.vertex_slice());
+                    render_pass.set_index_buffer(buffers.index_slice(), wgpu::IndexFormat::Uint32);
+                    render_pass.set_bind_group(
+                        0,
+                        // FIXME: we should use the texture from the material component.
+                        self.asset().default_texture_2d.bind_group(),
+                        &[],
+                    );
+                    render_pass.draw_indexed(mesh.indices(), 0, 0..1);
+                }
             }
         }
 
@@ -202,11 +223,11 @@ impl Gpu {
 /// A collection of resources to be loaded for GPU.
 #[derive(Debug)]
 pub(super) struct GpuAsset {
-    /// Default shader to use for the rendering pipeline.
-    pub(super) default_shader: Shader,
+    /// Triangle shader.
+    pub(super) triangle_shader: Shader,
 
-    /// Default 2D texture bind group layout.
-    pub(super) default_texture_2d_bind_group_layout: wgpu::BindGroupLayout,
+    /// Triangle shader with texture bindings.
+    pub(super) triangle_tex_shader: Shader,
 
     /// Default 2D texture to use for the rendering pipeline.
     pub(super) default_texture_2d: Texture2D,
@@ -214,28 +235,73 @@ pub(super) struct GpuAsset {
 
 impl GpuAsset {
     /// Loads the GPU assets.
-    pub fn load(gpu: &Gpu, config: &GpuConfig) -> Self {
-        let default_texture_2d_bind_group_layout =
-            gpu.device
-                .create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                    label: None,
-                    entries: Texture2D::BIND_GROUP_LAYOUT_ENTRIES,
-                });
-
-        let default_shader = Shader::new(gpu, &config.default_shader);
-
-        let default_texture_2d = Texture2D::new(
+    pub fn load(gpu: &Gpu, _config: &GpuConfig) -> Self {
+        let triangle_shader = Shader::new(
             gpu,
-            Texture2DConfig {
-                size: (1, 1),
-                data: vec![255, 255, 255],
-            },
+            &ShaderConfig::new(include_str!("shaders/triangle.wgsl"))
+                .with_vertex_type::<Vertex2DColor>(),
         );
 
+        let triangle_tex_shader = Shader::new(
+            gpu,
+            &ShaderConfig::new(include_str!("shaders/triangle_tex.wgsl"))
+                .with_vertex_type::<Vertex2DTexture>()
+                .with_uniforms(&[UniformType::Texture2D]),
+        );
+
+        let default_texture_2d = Texture2D::new(gpu, Self::default_texture_2d_config());
+
         Self {
-            default_shader,
-            default_texture_2d_bind_group_layout,
+            triangle_shader,
+            triangle_tex_shader,
             default_texture_2d,
+        }
+    }
+
+    fn default_texture_2d_config() -> Texture2DConfig<Vec<u8>> {
+        const BRIGHT: u8 = 200;
+        const DARK: u8 = 80;
+        const ALPHA: u8 = 255;
+
+        // Create a 8x8 texture with checkerboard pattern.
+        let mut data = vec![0; 8 * 8 * 4];
+        for i in 0..8 {
+            for j in 0..8 {
+                let use_color = ((i + j) % 2) > 0;
+                data[i * 8 * 4 + j * 4 + 0] = if use_color { BRIGHT } else { DARK };
+                data[i * 8 * 4 + j * 4 + 1] = if use_color { BRIGHT } else { DARK };
+                data[i * 8 * 4 + j * 4 + 2] = if use_color { BRIGHT } else { DARK };
+                data[i * 8 * 4 + j * 4 + 3] = ALPHA;
+            }
+        }
+        Texture2DConfig {
+            size: (8, 8),
+            data,
+            filter_mode: TextureFilterMode::Point,
+        }
+    }
+}
+
+#[derive(Debug)]
+pub(super) struct GpuDefaultBindGroupLayouts {
+    pub(super) texture_2d: wgpu::BindGroupLayout,
+}
+
+impl GpuDefaultBindGroupLayouts {
+    /// Creates default bind group layouts.
+    pub fn new(device: &wgpu::Device) -> Self {
+        Self {
+            texture_2d: device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                label: None,
+                entries: Texture2D::BIND_GROUP_LAYOUT_ENTRIES,
+            }),
+        }
+    }
+
+    /// Retrieves the bind group layout according to the specified uniform type.
+    pub fn uniform_layout(&self, uniform_type: &UniformType) -> &wgpu::BindGroupLayout {
+        match uniform_type {
+            UniformType::Texture2D => &self.texture_2d,
         }
     }
 }
