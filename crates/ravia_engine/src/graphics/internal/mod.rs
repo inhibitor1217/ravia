@@ -1,3 +1,4 @@
+pub mod camera;
 pub mod gpu;
 pub mod material;
 pub mod mesh;

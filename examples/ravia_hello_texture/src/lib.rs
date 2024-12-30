@@ -28,6 +28,9 @@ pub fn run() {
 }
 
 fn init_world(world: &mut World, ctx: &EngineContext) {
+    let camera = Camera::noop();
+    world.push((camera,));
+
     let mesh = Mesh::new_indexed::<Vertex2DTexture>(
         ctx,
         vec![
