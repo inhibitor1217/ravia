@@ -11,6 +11,8 @@ pub trait Uniform {
 /// supported from the engine by default.
 #[derive(Debug, Clone, Copy)]
 pub enum UniformType {
-    /// Binds a [`super::Texture2D`] type as a uniform.
+    /// Binds a 2D [`super::texture::Texture`] type as a uniform.
     Texture2D,
+    /// Binds a [`super::camera::Camera`] type as a uniform.
+    Camera,
 }

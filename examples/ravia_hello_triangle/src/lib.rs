@@ -28,7 +28,7 @@ pub fn run() {
 }
 
 fn init_world(world: &mut World, ctx: &EngineContext) {
-    let camera = Camera::noop();
+    let camera = Camera::noop(ctx);
     world.push((camera,));
 
     let mesh = Mesh::new::<Vertex2DColor>(

@@ -8,10 +8,7 @@ use crate::{
 };
 
 use super::{
-    material::Material,
-    mesh::Mesh,
-    texture::Texture,
-    uniform::{Uniform, UniformType},
+    camera::Camera, material::Material, mesh::Mesh, texture::Texture, uniform::{Uniform, UniformType}
 };
 
 /// [`Gpu`] holds the WebGPU device and its resources.
@@ -186,6 +183,7 @@ impl Gpu {
 
 #[derive(Debug)]
 pub(super) struct GpuDefaultBindGroupLayouts {
+    pub camera: wgpu::BindGroupLayout,
     pub texture_2d: wgpu::BindGroupLayout,
 }
 
@@ -193,6 +191,10 @@ impl GpuDefaultBindGroupLayouts {
     /// Creates default bind group layouts.
     pub fn new(device: &wgpu::Device) -> Self {
         Self {
+            camera: device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                label: None,
+                entries: Camera::CAMERA_BIND_GROUP_LAYOUT_ENTRIES,
+            }),
             texture_2d: device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 label: None,
                 entries: Texture::TEXTURE_2D_BIND_GROUP_LAYOUT_ENTRIES,
@@ -203,6 +205,7 @@ impl GpuDefaultBindGroupLayouts {
     /// Retrieves the bind group layout according to the specified uniform type.
     pub fn uniform_layout(&self, uniform_type: &UniformType) -> &wgpu::BindGroupLayout {
         match uniform_type {
+            UniformType::Camera => &self.camera,
             UniformType::Texture2D => &self.texture_2d,
         }
     }
