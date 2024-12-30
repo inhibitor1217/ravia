@@ -29,9 +29,17 @@ unsafe impl<D: bytemuck::Pod + bytemuck::Zeroable> bytemuck::Pod for Vertex2D<D>
 /// A 2D vertex with a color.
 pub type Vertex2DColor = Vertex2D<[f32; 3]>;
 
+/// A 2D vertex with a texture coordinate.
+pub type Vertex2DTexture = Vertex2D<[f32; 2]>;
+
 impl Vertex for Vertex2DColor {
     const ATTRIBUTE_FORMATS: &[wgpu::VertexFormat] =
         &[wgpu::VertexFormat::Float32x2, wgpu::VertexFormat::Float32x3];
+}
+
+impl Vertex for Vertex2DTexture {
+    const ATTRIBUTE_FORMATS: &[wgpu::VertexFormat] =
+        &[wgpu::VertexFormat::Float32x2, wgpu::VertexFormat::Float32x2];
 }
 
 /// A mesh component describes a shape that can be rendered with a GPU.
