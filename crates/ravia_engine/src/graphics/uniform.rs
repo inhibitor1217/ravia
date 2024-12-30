@@ -1,9 +1,10 @@
 /// A trait for uniform variables.
 pub trait Uniform {
-    const TYPE: UniformType;
-
     /// Specifies the bind group of the uniform variable.
     fn bind_group(&self) -> &wgpu::BindGroup;
+
+    /// Specifies the uniform type, which marks the bind group layout to use.
+    fn uniform_type(&self) -> UniformType;
 }
 
 /// Specifies the type of the uniform variable, whose bindings are

@@ -1,11 +1,13 @@
+use core::fmt;
+
 use crate::{ecs, engine::EngineContext};
 
-use super::{Shader, ShaderConfig};
+use super::{Shader, ShaderConfig, Texture};
 
 /// A [`Material`] component describes how the shape should be rendered.
-#[derive(Debug)]
 pub struct Material {
-    pub(super) shader: Shader,
+    pub shader: Shader,
+    pub texture: Option<Texture>,
 }
 
 assert_impl_all!(Material: ecs::storage::Component);
@@ -15,6 +17,13 @@ impl Material {
     pub fn new(ctx: &EngineContext, shader_config: &ShaderConfig) -> Self {
         Self {
             shader: Shader::new(ctx, shader_config),
+            texture: None,
         }
+    }
+}
+
+impl fmt::Debug for Material {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "Material")
     }
 }

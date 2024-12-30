@@ -50,13 +50,15 @@ fn init_world(world: &mut World, ctx: &EngineContext) {
         ],
         vec![0, 1, 3, 0, 3, 2],
     );
-    
-    let material = Material::new(
+
+    let mut material = Material::new(
         ctx,
         &ShaderConfig::new(include_str!("triangle_tex.wgsl"))
             .with_vertex_type::<Vertex2DTexture>()
             .with_uniforms(&[UniformType::Texture2D]),
     );
+    let texture = Texture::default_2d(ctx);
+    material.texture = Some(texture);
 
     world.push((mesh, material));
 }

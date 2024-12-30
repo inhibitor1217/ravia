@@ -4,11 +4,7 @@ use log::{error, info};
 
 use crate::ecs::{self, IntoQuery};
 
-use super::{Material, Mesh, Texture, Texture2D, Texture2DConfig, TextureFilterMode, UniformType};
-
-/// Configuration for the GPU.
-#[derive(Clone, Copy, Debug, Default)]
-pub struct GpuConfig {}
+use super::{Material, Mesh, Texture, Uniform, UniformType};
 
 /// [`Gpu`] holds the WebGPU device and its resources.
 #[derive(Debug)]
@@ -33,14 +29,11 @@ pub struct Gpu {
 
     /// A collection of default bind group layouts.
     pub(super) default_bind_group_layouts: GpuDefaultBindGroupLayouts,
-
-    /// A collection of GPU assets that are loaded on initialization.
-    pub(super) asset: Option<GpuAsset>,
 }
 
 impl Gpu {
     /// Creates a new [`Gpu`] and initializes its resources.
-    pub async fn new(window: Arc<winit::window::Window>, config: &GpuConfig) -> Self {
+    pub async fn new(window: Arc<winit::window::Window>) -> Self {
         let instance = wgpu::Instance::new(Default::default());
 
         let surface = instance
@@ -92,19 +85,14 @@ impl Gpu {
 
         let default_bind_group_layouts = GpuDefaultBindGroupLayouts::new(&device);
 
-        let mut gpu = Self {
+        Self {
             device,
             queue,
             surface,
             surface_config: Mutex::new(surface_config),
             window,
             default_bind_group_layouts,
-            asset: None,
-        };
-
-        gpu.asset = Some(GpuAsset::load(&gpu, config));
-
-        gpu
+        }
     }
 
     /// Retrieves the current display size from the window.
@@ -177,58 +165,15 @@ impl Gpu {
                 render_pass.set_pipeline(material.shader.pipeline());
                 render_pass.set_vertex_buffer(0, mesh.vertex_slice());
                 render_pass.set_index_buffer(mesh.index_slice(), wgpu::IndexFormat::Uint32);
+                if let Some(texture) = &material.texture {
+                    render_pass.set_bind_group(0, texture.bind_group(), &[]);
+                }
                 render_pass.draw_indexed(mesh.indices(), 0, 0..1);
             }
         }
 
         self.queue.submit(std::iter::once(command_encoder.finish()));
         surface_texture.present();
-    }
-
-    /// Retrieves the GPU asset.
-    pub(super) fn asset(&self) -> &GpuAsset {
-        self.asset
-            .as_ref()
-            .expect("GPU asset not loaded, proper initialization is required")
-    }
-}
-
-/// A collection of resources to be loaded for GPU.
-#[derive(Debug)]
-pub(super) struct GpuAsset {
-    /// Default 2D texture to use for the rendering pipeline.
-    pub(super) default_texture_2d: Texture2D,
-}
-
-impl GpuAsset {
-    /// Loads the GPU assets.
-    pub fn load(gpu: &Gpu, _config: &GpuConfig) -> Self {
-        let default_texture_2d = Texture2D::new(gpu, Self::default_texture_2d_config());
-
-        Self { default_texture_2d }
-    }
-
-    fn default_texture_2d_config() -> Texture2DConfig<Vec<u8>> {
-        const BRIGHT: u8 = 200;
-        const DARK: u8 = 80;
-        const ALPHA: u8 = 255;
-
-        // Create a 8x8 texture with checkerboard pattern.
-        let mut data = vec![0; 8 * 8 * 4];
-        for i in 0..8 {
-            for j in 0..8 {
-                let use_color = ((i + j) % 2) > 0;
-                data[i * 8 * 4 + j * 4] = if use_color { BRIGHT } else { DARK };
-                data[i * 8 * 4 + j * 4 + 1] = if use_color { BRIGHT } else { DARK };
-                data[i * 8 * 4 + j * 4 + 2] = if use_color { BRIGHT } else { DARK };
-                data[i * 8 * 4 + j * 4 + 3] = ALPHA;
-            }
-        }
-        Texture2DConfig {
-            size: (8, 8),
-            data,
-            filter_mode: TextureFilterMode::Point,
-        }
     }
 }
 
@@ -243,7 +188,7 @@ impl GpuDefaultBindGroupLayouts {
         Self {
             texture_2d: device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 label: None,
-                entries: Texture2D::BIND_GROUP_LAYOUT_ENTRIES,
+                entries: Texture::TEXTURE_2D_BIND_GROUP_LAYOUT_ENTRIES,
             }),
         }
     }

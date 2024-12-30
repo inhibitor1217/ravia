@@ -24,8 +24,6 @@ pub struct EngineConfig {
     pub display_width: u32,
     /// Display height. Only effective in native mode.
     pub display_height: u32,
-    /// GPU configuration.
-    pub gpu: graphics::GpuConfig,
     /// World initializer.
     pub init_world: InitWorld,
 }
@@ -36,7 +34,6 @@ impl Default for EngineConfig {
             window_title: "",
             display_width: 1024,
             display_height: 720,
-            gpu: graphics::GpuConfig::default(),
             init_world: |_, _| {},
         }
     }
@@ -179,7 +176,7 @@ impl Engine {
         let window = Arc::new(window);
 
         debug!(target: "ravia_engine::engine", "Initializing WebGPU resources");
-        let gpu = graphics::Gpu::new(window.clone(), &config.gpu).await;
+        let gpu = graphics::Gpu::new(window.clone()).await;
         let gpu = Arc::new(gpu);
 
         let mut world = ecs::World::default();
