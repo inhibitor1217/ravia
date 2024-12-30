@@ -1,3 +1,8 @@
 [workspace]
-members = ["crates/ravia_engine", "examples/ravia_hello_texture", "examples/ravia_hello_triangle"]
+members = [
+  "crates/ravia_engine",
+  "examples/ravia_hello_3d",
+  "examples/ravia_hello_texture",
+  "examples/ravia_hello_triangle",
+]
 resolver = "2"
