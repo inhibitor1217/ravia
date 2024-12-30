@@ -4,19 +4,19 @@ use log::{error, info};
 
 use crate::ecs::{self, IntoQuery};
 
-use super::{Mesh, Shader, ShaderConfig, Vertex2DColor, VertexBufferConfig};
+use super::{Mesh, Shader, ShaderConfig, Texture, Texture2D, Texture2DConfig, Vertex2DColor};
 
 /// Configuration for the GPU.
-#[derive(Debug, Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct GpuConfig {
-    /// Default shader source.
-    pub default_shader_source: &'static str,
+    /// Default shader configuration.
+    pub default_shader: ShaderConfig<'static>,
 }
 
 impl Default for GpuConfig {
     fn default() -> Self {
         Self {
-            default_shader_source: "",
+            default_shader: ShaderConfig::default(),
         }
     }
 }
@@ -184,6 +184,11 @@ impl Gpu {
             render_pass.set_pipeline(self.asset().default_shader.pipeline());
             for mesh in renderables_query.iter_mut(world) {
                 let buffers = mesh.allocate_buffers(self);
+
+                // FIXME: we are temporarily binding a binding group 0 to the preset texture.
+                // We will need to change this to a more flexible approach in the future.
+                render_pass.set_bind_group(0, self.asset().default_texture_2d.bind_group(), &[]);
+
                 render_pass.set_vertex_buffer(0, buffers.vertex_slice());
                 render_pass.set_index_buffer(buffers.index_slice(), wgpu::IndexFormat::Uint32);
                 render_pass.draw_indexed(mesh.indices(), 0, 0..1);
@@ -210,6 +215,9 @@ pub(super) struct GpuAsset {
 
     /// Default 2D texture bind group layout.
     pub(super) default_texture_2d_bind_group_layout: wgpu::BindGroupLayout,
+
+    /// Default 2D texture to use for the rendering pipeline.
+    pub(super) default_texture_2d: Texture2D,
 }
 
 impl GpuAsset {
@@ -218,36 +226,24 @@ impl GpuAsset {
         let default_texture_2d_bind_group_layout =
             gpu.device
                 .create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                    entries: &[
-                        wgpu::BindGroupLayoutEntry {
-                            binding: 0,
-                            visibility: wgpu::ShaderStages::FRAGMENT,
-                            ty: wgpu::BindingType::Texture {
-                                view_dimension: wgpu::TextureViewDimension::D2,
-                                sample_type: wgpu::TextureSampleType::Float { filterable: true },
-                                multisampled: false,
-                            },
-                            count: None,
-                        },
-                        wgpu::BindGroupLayoutEntry {
-                            binding: 1,
-                            visibility: wgpu::ShaderStages::FRAGMENT,
-                            ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
-                            count: None,
-                        },
-                    ],
                     label: None,
+                    entries: Texture2D::BIND_GROUP_LAYOUT_ENTRIES,
                 });
 
-        let default_shader = Shader::new(
+        let default_shader = Shader::new(gpu, &config.default_shader);
+
+        let default_texture_2d = Texture2D::new(
             gpu,
-            ShaderConfig::new(config.default_shader_source)
-                .with_vertex_buffer_config(VertexBufferConfig::new::<Vertex2DColor>()),
+            Texture2DConfig {
+                size: (1, 1),
+                data: vec![255, 255, 255],
+            },
         );
 
         Self {
             default_shader,
             default_texture_2d_bind_group_layout,
+            default_texture_2d,
         }
     }
 }

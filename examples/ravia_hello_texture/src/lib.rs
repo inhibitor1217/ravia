@@ -24,28 +24,34 @@ pub fn run() {
         window_title: "Hello Texture",
         init_world,
         gpu: GpuConfig {
-            default_shader_source: include_str!("triangle_tex.wgsl"),
+            default_shader: ShaderConfig::new(include_str!("triangle_tex.wgsl"))
+                .with_vertex_type::<Vertex2DTexture>()
+                .with_bound_texture::<Texture2D>(),
         },
         ..Default::default()
     });
 }
 
 fn init_world(world: &mut World) {
-    world.push((Mesh::<Vertex2DColor>::new(
+    world.push((Mesh::<Vertex2DTexture>::new(
         vec![
-            Vertex2DColor {
+            Vertex2DTexture {
                 position: [-0.5, -0.5],
-                data: [1.0, 0.0, 0.0],
+                data: [0.0, 1.0],
             },
-            Vertex2DColor {
+            Vertex2DTexture {
                 position: [0.5, -0.5],
-                data: [0.0, 1.0, 0.0],
+                data: [1.0, 1.0],
             },
-            Vertex2DColor {
-                position: [0.0, 0.5],
-                data: [0.0, 0.0, 1.0],
+            Vertex2DTexture {
+                position: [-0.5, 0.5],
+                data: [0.0, 0.0],
+            },
+            Vertex2DTexture {
+                position: [0.5, 0.5],
+                data: [1.0, 0.0],
             },
         ],
-        vec![0, 1, 2],
+        vec![0, 1, 3, 0, 3, 2],
     ),));
 }

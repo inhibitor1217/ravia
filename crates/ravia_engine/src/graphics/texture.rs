@@ -4,17 +4,26 @@ use wgpu::util::DeviceExt;
 
 use super::gpu;
 
+/// A trait for texture types.
+pub trait Texture {
+    /// Returns the bind group layout entries for the texture.
+    /// This defines how the texture is bound to the shader.
+    const BIND_GROUP_LAYOUT_ENTRIES: &[wgpu::BindGroupLayoutEntry];
+}
+
 /// Configuration to create a [`Texture2D`].
+#[derive(Debug)]
 pub struct Texture2DConfig<D: Deref<Target = [u8]>> {
     pub size: (u32, u32),
     pub data: D,
 }
 
 /// A 2D texture.
+#[derive(Debug)]
 pub struct Texture2D {
-    texture: wgpu::Texture,
-    texture_view: wgpu::TextureView,
-    sampler: wgpu::Sampler,
+    _texture: wgpu::Texture,
+    _texture_view: wgpu::TextureView,
+    _sampler: wgpu::Sampler,
     bind_group: wgpu::BindGroup,
 }
 
@@ -68,10 +77,36 @@ impl Texture2D {
         });
 
         Self {
-            texture,
-            texture_view,
-            sampler,
+            _texture: texture,
+            _texture_view: texture_view,
+            _sampler: sampler,
             bind_group,
         }
     }
+
+    /// Retrieves the bind group of the texture.
+    pub(super) fn bind_group(&self) -> &wgpu::BindGroup {
+        &self.bind_group
+    }
+}
+
+impl Texture for Texture2D {
+    const BIND_GROUP_LAYOUT_ENTRIES: &[wgpu::BindGroupLayoutEntry] = &[
+        wgpu::BindGroupLayoutEntry {
+            binding: 0,
+            visibility: wgpu::ShaderStages::FRAGMENT,
+            ty: wgpu::BindingType::Texture {
+                view_dimension: wgpu::TextureViewDimension::D2,
+                sample_type: wgpu::TextureSampleType::Float { filterable: true },
+                multisampled: false,
+            },
+            count: None,
+        },
+        wgpu::BindGroupLayoutEntry {
+            binding: 1,
+            visibility: wgpu::ShaderStages::FRAGMENT,
+            ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
+            count: None,
+        },
+    ];
 }

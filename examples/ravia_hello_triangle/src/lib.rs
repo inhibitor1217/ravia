@@ -24,7 +24,8 @@ pub fn run() {
         window_title: "Hello Triangle",
         init_world,
         gpu: GpuConfig {
-            default_shader_source: include_str!("triangle.wgsl"),
+            default_shader: ShaderConfig::new(include_str!("triangle.wgsl"))
+                .with_vertex_type::<Vertex2DColor>(),
         },
         ..Default::default()
     });
