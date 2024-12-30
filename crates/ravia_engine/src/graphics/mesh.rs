@@ -40,6 +40,19 @@ impl Vertex for Vertex2DTexture {
         &[wgpu::VertexFormat::Float32x2, wgpu::VertexFormat::Float32x2];
 }
 
+// A 3D vertex with a custom data type.
+#[repr(C)]
+#[derive(Clone, Copy, Debug, bytemuck::Zeroable)]
+pub struct Vertex3D<D>
+where
+    D: bytemuck::Pod + bytemuck::Zeroable,
+{
+    pub position: [f32; 3],
+    pub data: D,
+}
+
+unsafe impl<D: bytemuck::Pod + bytemuck::Zeroable> bytemuck::Pod for Vertex3D<D> {}
+
 /// A [`Mesh`] component describes a shape that can be rendered with a GPU.
 #[derive(Debug)]
 pub struct Mesh {
