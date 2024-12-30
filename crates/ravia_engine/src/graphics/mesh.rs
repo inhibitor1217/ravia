@@ -53,11 +53,23 @@ pub struct Mesh {
 assert_impl_all!(Mesh: ecs::storage::Component);
 
 impl Mesh {
+    /// Creates a new [`Mesh`] from vertex data.
+    ///
+    /// This is a convenience function that creates an indexed mesh with the default indices.
+    pub fn new<V: Vertex>(ctx: &EngineContext, vertices: Vec<V>) -> Self {
+        let indices = (0..vertices.len() as u32).collect();
+        Self::new_indexed(ctx, vertices, indices)
+    }
+
     /// Creates a new [`Mesh`] from vertex and index data.
     ///
     /// For now, we are allocating a new buffer for each mesh. This can be later optimized by allocating
     /// a large buffer for multiple meshes and tracking their offset.
-    pub fn new<V: Vertex>(ctx: &EngineContext, vertices: Vec<V>, indices: Vec<u32>) -> Self {
+    pub fn new_indexed<V: Vertex>(
+        ctx: &EngineContext,
+        vertices: Vec<V>,
+        indices: Vec<u32>,
+    ) -> Self {
         let vertex_buffer = ctx
             .gpu
             .device

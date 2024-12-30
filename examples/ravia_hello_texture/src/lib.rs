@@ -28,7 +28,7 @@ pub fn run() {
 }
 
 fn init_world(world: &mut World, ctx: &EngineContext) {
-    world.push((Mesh::new::<Vertex2DTexture>(
+    world.push((Mesh::new_indexed::<Vertex2DTexture>(
         ctx,
         vec![
             Vertex2DTexture {

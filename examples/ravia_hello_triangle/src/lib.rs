@@ -44,6 +44,5 @@ fn init_world(world: &mut World, ctx: &EngineContext) {
                 data: [0.0, 0.0, 1.0],
             },
         ],
-        vec![0, 1, 2],
     ),));
 }
