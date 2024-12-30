@@ -5,8 +5,8 @@ use log::{error, info};
 use crate::ecs::{self, IntoQuery};
 
 use super::{
-    Mesh, Shader, ShaderConfig, Texture, Texture2D, Texture2DConfig, TextureFilterMode, Uniform,
-    UniformType, Vertex2DColor, Vertex2DTexture,
+    Material, Mesh, Shader, ShaderConfig, Texture, Texture2D, Texture2DConfig, TextureFilterMode,
+    Uniform, UniformType, Vertex2DColor, Vertex2DTexture,
 };
 
 /// Configuration for the GPU.
@@ -177,26 +177,24 @@ impl Gpu {
 
             // Draw call using triangle shader.
             {
-                let mut renderables_query = <&mut Mesh<Vertex2DColor>>::query();
+                let mut renderables_query = <&Mesh>::query();
 
                 render_pass.set_pipeline(self.asset().triangle_shader.pipeline());
                 for mesh in renderables_query.iter_mut(world) {
-                    let buffers = mesh.allocate_buffers(self);
-                    render_pass.set_vertex_buffer(0, buffers.vertex_slice());
-                    render_pass.set_index_buffer(buffers.index_slice(), wgpu::IndexFormat::Uint32);
+                    render_pass.set_vertex_buffer(0, mesh.vertex_slice());
+                    render_pass.set_index_buffer(mesh.index_slice(), wgpu::IndexFormat::Uint32);
                     render_pass.draw_indexed(mesh.indices(), 0, 0..1);
                 }
             }
 
             // Draw call using triangle shader with texture bindings.
             {
-                let mut renderables_query = <&mut Mesh<Vertex2DTexture>>::query();
+                let mut renderables_query = <(&Mesh, &Material)>::query();
 
                 render_pass.set_pipeline(self.asset().triangle_tex_shader.pipeline());
-                for mesh in renderables_query.iter_mut(world) {
-                    let buffers = mesh.allocate_buffers(self);
-                    render_pass.set_vertex_buffer(0, buffers.vertex_slice());
-                    render_pass.set_index_buffer(buffers.index_slice(), wgpu::IndexFormat::Uint32);
+                for (mesh, _) in renderables_query.iter_mut(world) {
+                    render_pass.set_vertex_buffer(0, mesh.vertex_slice());
+                    render_pass.set_index_buffer(mesh.index_slice(), wgpu::IndexFormat::Uint32);
                     render_pass.set_bind_group(
                         0,
                         // FIXME: we should use the texture from the material component.

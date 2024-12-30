@@ -1,8 +1,6 @@
 use wgpu::util::DeviceExt;
 
-use crate::ecs;
-
-use super::Gpu;
+use crate::{ecs, engine::EngineContext};
 
 /// A trait for vertex data.
 ///
@@ -44,87 +42,71 @@ impl Vertex for Vertex2DTexture {
 
 /// A mesh component describes a shape that can be rendered with a GPU.
 #[derive(Debug)]
-pub struct Mesh<V: Vertex> {
-    pub vertex_data: Vec<V>,
-    pub index_data: Vec<u32>,
+pub struct Mesh {
+    pub(super) vertex_buffer: wgpu::Buffer,
+    pub(super) index_buffer: wgpu::Buffer,
 
-    pub(super) buffers: Option<MeshBuffers>,
+    num_vertices: u32,
+    num_indices: u32,
 }
 
-assert_impl_all!(Mesh<Vertex2DColor>: ecs::storage::Component);
+assert_impl_all!(Mesh: ecs::storage::Component);
 
-impl<V: Vertex> Mesh<V> {
-    /// Creates a new [`Mesh`].
-    pub fn new(vertices: Vec<V>, indices: Vec<u32>) -> Self {
+impl Mesh {
+    /// Creates a new [`Mesh`] from vertex and index data.
+    ///
+    /// For now, we are allocating a new buffer for each mesh. This can be later optimized by allocating
+    /// a large buffer for multiple meshes and tracking their offset.
+    pub fn new<V: Vertex>(ctx: &EngineContext, vertices: Vec<V>, indices: Vec<u32>) -> Self {
+        let vertex_buffer = ctx
+            .gpu
+            .device
+            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: None,
+                contents: bytemuck::cast_slice(&vertices),
+                usage: wgpu::BufferUsages::VERTEX,
+            });
+
+        let index_buffer = ctx
+            .gpu
+            .device
+            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: None,
+                contents: bytemuck::cast_slice(&indices),
+                usage: wgpu::BufferUsages::INDEX,
+            });
+
         Self {
-            vertex_data: vertices,
-            index_data: indices,
-            buffers: None,
+            vertex_buffer,
+            index_buffer,
+
+            num_vertices: vertices.len() as u32,
+            num_indices: indices.len() as u32,
         }
     }
 
     /// Returns the number of vertices in the mesh.
     pub fn num_vertices(&self) -> u32 {
-        self.vertex_data.len() as u32
+        self.num_vertices
     }
 
     /// Returns the number of indices in the mesh.
     pub fn num_indices(&self) -> u32 {
-        self.index_data.len() as u32
+        self.num_indices
     }
 
     /// Returns the index range of the mesh.
     pub fn indices(&self) -> std::ops::Range<u32> {
-        0..self.num_indices()
+        0..self.num_indices
     }
 
-    /// Allocates the buffers for the mesh if they are not already allocated.
-    pub(super) fn allocate_buffers(&mut self, gpu: &Gpu) -> &MeshBuffers {
-        if self.buffers.is_none() {
-            let vertex_buffer = gpu
-                .device
-                .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                    label: None,
-                    contents: bytemuck::cast_slice(&self.vertex_data),
-                    usage: wgpu::BufferUsages::VERTEX,
-                });
-
-            let index_buffer = gpu
-                .device
-                .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                    label: None,
-                    contents: bytemuck::cast_slice(&self.index_data),
-                    usage: wgpu::BufferUsages::INDEX,
-                });
-
-            self.buffers = Some(MeshBuffers {
-                vertex_buffer,
-                index_buffer,
-            });
-        }
-
-        self.buffers.as_ref().unwrap()
-    }
-}
-
-/// Handles for the underlying buffers allocated in the GPU for the mesh.
-///
-/// For now, we just use a simple strategy to allocate new buffers for each mesh.
-/// This can be optimized later.
-#[derive(Debug)]
-pub(super) struct MeshBuffers {
-    pub vertex_buffer: wgpu::Buffer,
-    pub index_buffer: wgpu::Buffer,
-}
-
-impl MeshBuffers {
     /// Returns a slice of the vertex buffer to bind for a render pass.
-    pub fn vertex_slice(&self) -> wgpu::BufferSlice {
+    pub(super) fn vertex_slice(&self) -> wgpu::BufferSlice {
         self.vertex_buffer.slice(..)
     }
 
     /// Returns a slice of the index buffer to bind for a render pass.
-    pub fn index_slice(&self) -> wgpu::BufferSlice {
+    pub(super) fn index_slice(&self) -> wgpu::BufferSlice {
         self.index_buffer.slice(..)
     }
 }

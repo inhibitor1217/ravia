@@ -27,8 +27,9 @@ pub fn run() {
     });
 }
 
-fn init_world(world: &mut World) {
-    world.push((Mesh::<Vertex2DTexture>::new(
+fn init_world(world: &mut World, ctx: &EngineContext) {
+    world.push((Mesh::new::<Vertex2DTexture>(
+        ctx,
         vec![
             Vertex2DTexture {
                 position: [-0.5, -0.5],

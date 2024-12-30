@@ -12,8 +12,8 @@ use winit::{
 
 use crate::{ecs, graphics};
 
-/// A function that initializes the world.
-type InitWorld = fn(&mut ecs::World);
+/// World initializer.
+pub type InitWorld = fn(&mut ecs::World, &EngineContext);
 
 /// Engine configuration.
 #[derive(Clone, Copy, Debug)]
@@ -24,10 +24,10 @@ pub struct EngineConfig {
     pub display_width: u32,
     /// Display height. Only effective in native mode.
     pub display_height: u32,
-    /// Specifies how the world is initialized.
-    pub init_world: InitWorld,
     /// GPU configuration.
     pub gpu: graphics::GpuConfig,
+    /// World initializer.
+    pub init_world: InitWorld,
 }
 
 impl Default for EngineConfig {
@@ -36,8 +36,8 @@ impl Default for EngineConfig {
             window_title: "",
             display_width: 1024,
             display_height: 720,
-            init_world: |_| {},
             gpu: graphics::GpuConfig::default(),
+            init_world: |_, _| {},
         }
     }
 }
@@ -183,14 +183,15 @@ impl Engine {
         let gpu = Arc::new(gpu);
 
         let mut world = ecs::World::default();
-        (config.init_world)(&mut world);
 
         let mut resources = ecs::Resources::default();
-        resources.insert(gpu.clone());
+        resources.insert(EngineContext { gpu: gpu.clone() });
 
         let mut schedule_builder = ecs::Schedule::builder();
         graphics::system::subsystem(&mut schedule_builder);
         let schedule = schedule_builder.build();
+
+        (config.init_world)(&mut world, &EngineContext { gpu: gpu.clone() });
 
         Self {
             world,
@@ -254,6 +255,13 @@ impl fmt::Debug for Engine {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "Ravia Engine")
     }
+}
+
+/// [`EngineContext`] contains the reference for the global resources, which can be then accessed
+/// by the system update loop.
+#[derive(Debug)]
+pub struct EngineContext {
+    pub gpu: Arc<graphics::Gpu>,
 }
 
 fn resolve_future<F: Future<Output = ()> + 'static>(f: F) {

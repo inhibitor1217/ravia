@@ -27,8 +27,9 @@ pub fn run() {
     });
 }
 
-fn init_world(world: &mut World) {
-    world.push((Mesh::<Vertex2DColor>::new(
+fn init_world(world: &mut World, ctx: &EngineContext) {
+    world.push((Mesh::new::<Vertex2DColor>(
+        ctx,
         vec![
             Vertex2DColor {
                 position: [-0.5, -0.5],
