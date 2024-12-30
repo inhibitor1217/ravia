@@ -136,8 +136,10 @@ impl ApplicationHandler<EngineEvent> for EngineState {
 /// [`Engine`] contains the resources for the components of the engine.
 #[derive(Debug)]
 pub struct Engine {
-    window: Arc<Window>,
     world: ecs::World,
+    schedule: ecs::Schedule,
+
+    window: Arc<Window>,
     gpu: Arc<graphics::Gpu>,
 }
 
@@ -172,14 +174,26 @@ impl Engine {
     async fn new(window: Window, config: EngineConfig) -> Self {
         let window = Arc::new(window);
 
-        let mut world = ecs::World::default();
-        (config.init_world)(&mut world);
-
         debug!(target: "ravia_engine::engine", "Initializing WebGPU resources");
         let gpu = graphics::Gpu::new(window.clone()).await;
         let gpu = Arc::new(gpu);
 
-        Self { window, gpu, world }
+        let mut world = ecs::World::default();
+        (config.init_world)(&mut world);
+
+        let mut resources = ecs::Resources::default();
+        resources.insert(gpu.clone());
+
+        let mut schedule_builder = ecs::Schedule::builder();
+        graphics::system::subsystem(&mut schedule_builder);
+        let schedule = schedule_builder.build();
+
+        Self {
+            window,
+            gpu,
+            world,
+            schedule,
+        }
     }
 
     /// Creates a new [`Window`].
