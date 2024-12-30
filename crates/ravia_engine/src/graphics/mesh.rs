@@ -37,8 +37,8 @@ impl Vertex for Vertex2DColor {
 /// A mesh component describes a shape that can be rendered with a GPU.
 #[derive(Clone, Debug)]
 pub struct Mesh<V: Vertex> {
-    pub vertices: Vec<V>,
-    pub indices: Vec<u32>,
+    pub vertex_data: Vec<V>,
+    pub index_data: Vec<u32>,
 
     pub(super) buffers: Option<MeshBuffers>,
 }
@@ -47,30 +47,35 @@ impl<V: Vertex> Mesh<V> {
     /// Creates a new [`Mesh`].
     pub fn new(vertices: Vec<V>, indices: Vec<u32>) -> Self {
         Self {
-            vertices,
-            indices,
+            vertex_data: vertices,
+            index_data: indices,
             buffers: None,
         }
     }
 
     /// Returns the number of vertices in the mesh.
     pub fn num_vertices(&self) -> u32 {
-        self.vertices.len() as u32
+        self.vertex_data.len() as u32
     }
 
     /// Returns the number of indices in the mesh.
     pub fn num_indices(&self) -> u32 {
-        self.indices.len() as u32
+        self.index_data.len() as u32
+    }
+
+    /// Returns the index range of the mesh.
+    pub fn indices(&self) -> std::ops::Range<u32> {
+        0..self.num_indices()
     }
 
     /// Allocates the buffers for the mesh if they are not already allocated.
-    pub(super) fn maybe_allocate(&mut self, gpu: &Gpu) -> &MeshBuffers {
+    pub(super) fn allocate_buffers(&mut self, gpu: &Gpu) -> &MeshBuffers {
         if self.buffers.is_none() {
             let vertex_buffer = gpu
                 .device
                 .create_buffer_init(&wgpu::util::BufferInitDescriptor {
                     label: None,
-                    contents: bytemuck::cast_slice(&self.vertices),
+                    contents: bytemuck::cast_slice(&self.vertex_data),
                     usage: wgpu::BufferUsages::VERTEX,
                 });
 
@@ -78,7 +83,7 @@ impl<V: Vertex> Mesh<V> {
                 .device
                 .create_buffer_init(&wgpu::util::BufferInitDescriptor {
                     label: None,
-                    contents: bytemuck::cast_slice(&self.indices),
+                    contents: bytemuck::cast_slice(&self.index_data),
                     usage: wgpu::BufferUsages::INDEX,
                 });
 
@@ -97,7 +102,19 @@ impl<V: Vertex> Mesh<V> {
 /// For now, we just use a simple strategy to allocate new buffers for each mesh.
 /// This can be optimized later.
 #[derive(Clone, Debug)]
-struct MeshBuffers {
+pub(super) struct MeshBuffers {
     pub vertex_buffer: Arc<wgpu::Buffer>,
     pub index_buffer: Arc<wgpu::Buffer>,
+}
+
+impl MeshBuffers {
+    /// Returns a slice of the vertex buffer to bind for a render pass.
+    pub fn vertex_slice(&self) -> wgpu::BufferSlice {
+        self.vertex_buffer.slice(..)
+    }
+
+    /// Returns a slice of the index buffer to bind for a render pass.
+    pub fn index_slice(&self) -> wgpu::BufferSlice {
+        self.index_buffer.slice(..)
+    }
 }

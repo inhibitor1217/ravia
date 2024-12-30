@@ -172,11 +172,10 @@ impl Gpu {
             // For now, we simply iterate over all the renderable entities and render them in a separate draw call.
             render_pass.set_pipeline(asset.default_shader.pipeline());
             for mesh in renderables_query.iter_mut(world) {
-                let buffers = mesh.maybe_allocate(self);
-                render_pass.set_vertex_buffer(0, buffers.vertex_buffer.slice(..));
-                render_pass
-                    .set_index_buffer(buffers.index_buffer.slice(..), wgpu::IndexFormat::Uint32);
-                render_pass.draw_indexed(0..6, 0, 0..1);
+                let buffers = mesh.allocate_buffers(self);
+                render_pass.set_vertex_buffer(0, buffers.vertex_slice());
+                render_pass.set_index_buffer(buffers.index_slice(), wgpu::IndexFormat::Uint32);
+                render_pass.draw_indexed(mesh.indices(), 0, 0..1);
             }
         }
 
