@@ -28,7 +28,7 @@ pub struct Gpu {
     pub window: Arc<winit::window::Window>,
 
     /// A collection of GPU assets that are loaded on initialization.
-    asset: Option<GpuAsset>,
+    pub(super) asset: Option<GpuAsset>,
 }
 
 impl Gpu {
@@ -162,16 +162,11 @@ impl Gpu {
                 timestamp_writes: None,
             });
 
-            let asset = self
-                .asset
-                .as_ref()
-                .expect("GPU asset not loaded, proper initialization is required");
-
             let mut renderables_query = <&mut Mesh<Vertex2DColor>>::query();
 
             // For now, we simply iterate over all the renderable components and render them in separate draw calls.
             // Later we will optimize this by allocating a single buffer for multiple meshes and using a single draw call.
-            render_pass.set_pipeline(asset.default_shader.pipeline());
+            render_pass.set_pipeline(self.asset().default_shader.pipeline());
             for mesh in renderables_query.iter_mut(world) {
                 let buffers = mesh.allocate_buffers(self);
                 render_pass.set_vertex_buffer(0, buffers.vertex_slice());
@@ -183,25 +178,61 @@ impl Gpu {
         self.queue.submit(std::iter::once(command_encoder.finish()));
         surface_texture.present();
     }
+
+    /// Retrieves the GPU asset.
+    pub(super) fn asset(&self) -> &GpuAsset {
+        self.asset
+            .as_ref()
+            .expect("GPU asset not loaded, proper initialization is required")
+    }
 }
 
 /// A collection of resources to be loaded for GPU.
 #[derive(Debug)]
-struct GpuAsset {
+pub(super) struct GpuAsset {
     /// Default shader to use for the rendering pipeline.
-    default_shader: Shader,
+    pub(super) default_shader: Shader,
+
+    /// Default 2D texture bind group layout.
+    pub(super) default_texture_2d_bind_group_layout: wgpu::BindGroupLayout,
 }
 
 impl GpuAsset {
     /// Loads the GPU assets.
     pub fn load(gpu: &Gpu) -> Self {
+        let default_texture_2d_bind_group_layout =
+            gpu.device
+                .create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                    entries: &[
+                        wgpu::BindGroupLayoutEntry {
+                            binding: 0,
+                            visibility: wgpu::ShaderStages::FRAGMENT,
+                            ty: wgpu::BindingType::Texture {
+                                view_dimension: wgpu::TextureViewDimension::D2,
+                                sample_type: wgpu::TextureSampleType::Float { filterable: true },
+                                multisampled: false,
+                            },
+                            count: None,
+                        },
+                        wgpu::BindGroupLayoutEntry {
+                            binding: 1,
+                            visibility: wgpu::ShaderStages::FRAGMENT,
+                            ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
+                            count: None,
+                        },
+                    ],
+                    label: None,
+                });
+
+        let default_shader = Shader::new(
+            gpu,
+            ShaderConfig::new(include_str!("shaders/triangle.wgsl"))
+                .with_vertex_buffer_config(VertexBufferConfig::new::<Vertex2DColor>()),
+        );
+
         Self {
-            default_shader: Shader::new(
-                gpu,
-                // For now, we use a simple shader that draws a triangle.
-                ShaderConfig::new(include_str!("shaders/triangle.wgsl"))
-                    .with_vertex_buffer_config(VertexBufferConfig::new::<Vertex2DColor>()),
-            ),
+            default_shader,
+            default_texture_2d_bind_group_layout,
         }
     }
 }

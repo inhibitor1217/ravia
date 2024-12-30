@@ -18,18 +18,17 @@ impl VertexBufferConfig<'_> {
 /// [`ShaderConfig`] holds the source, entry points and other configuration for a shader.
 #[derive(Debug)]
 pub struct ShaderConfig<'a> {
-    pub name: Option<&'a str>,
     pub source: Option<wgpu::ShaderModuleDescriptor<'a>>,
     pub vertex_entry_point: &'static str,
     pub vertex_buffer: Option<VertexBufferConfig<'a>>,
     pub fragment_entry_point: &'static str,
+    pub bind_group_layouts: Vec<&'a wgpu::BindGroupLayout>,
 }
 
 impl<'a> ShaderConfig<'a> {
     /// Creates a new [`ShaderConfig`] from a WGSL shader source.
     pub fn new(source: &'a str) -> Self {
         Self {
-            name: None,
             source: Some(wgpu::ShaderModuleDescriptor {
                 label: None,
                 source: wgpu::ShaderSource::Wgsl(source.into()),
@@ -37,6 +36,7 @@ impl<'a> ShaderConfig<'a> {
             vertex_entry_point: "vs_main",
             vertex_buffer: None,
             fragment_entry_point: "fs_main",
+            bind_group_layouts: vec![],
         }
     }
 
@@ -45,16 +45,22 @@ impl<'a> ShaderConfig<'a> {
         self.vertex_buffer = Some(config);
         self
     }
+
+    /// Adds a bind group layout to the shader config.
+    pub fn with_bind_group_layout(mut self, layout: &'a wgpu::BindGroupLayout) -> Self {
+        self.bind_group_layouts.push(layout);
+        self
+    }
 }
 
 impl Default for ShaderConfig<'_> {
     fn default() -> Self {
         Self {
-            name: None,
             source: None,
             vertex_entry_point: "vs_main",
             vertex_buffer: None,
             fragment_entry_point: "fs_main",
+            bind_group_layouts: vec![],
         }
     }
 }
@@ -80,7 +86,7 @@ impl Shader {
             .device
             .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: None,
-                bind_group_layouts: &[],
+                bind_group_layouts: &config.bind_group_layouts,
                 push_constant_ranges: &[],
             });
 
