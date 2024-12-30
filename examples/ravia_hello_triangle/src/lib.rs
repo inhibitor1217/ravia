@@ -28,7 +28,7 @@ pub fn run() {
 }
 
 fn init_world(world: &mut World, ctx: &EngineContext) {
-    world.push((Mesh::new::<Vertex2DColor>(
+    let mesh = Mesh::new::<Vertex2DColor>(
         ctx,
         vec![
             Vertex2DColor {
@@ -44,5 +44,12 @@ fn init_world(world: &mut World, ctx: &EngineContext) {
                 data: [0.0, 0.0, 1.0],
             },
         ],
-    ),));
+    );
+
+    let material = Material::new(
+        ctx,
+        &ShaderConfig::new(include_str!("triangle.wgsl")).with_vertex_type::<Vertex2DColor>(),
+    );
+
+    world.push((mesh, material));
 }

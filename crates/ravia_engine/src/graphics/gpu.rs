@@ -4,10 +4,7 @@ use log::{error, info};
 
 use crate::ecs::{self, IntoQuery};
 
-use super::{
-    Material, Mesh, Shader, ShaderConfig, Texture, Texture2D, Texture2DConfig, TextureFilterMode,
-    Uniform, UniformType, Vertex2DColor, Vertex2DTexture,
-};
+use super::{Material, Mesh, Texture, Texture2D, Texture2DConfig, TextureFilterMode, UniformType};
 
 /// Configuration for the GPU.
 #[derive(Clone, Copy, Debug, Default)]
@@ -128,7 +125,7 @@ impl Gpu {
     ///
     /// For now, this procedure contains all the details about wgpu render pipeline specific to
     /// surface texture. We hope to move this to a separate module in the future.
-    pub fn render(&self, world: &mut ecs::World) {
+    pub fn render(&self, world: &ecs::World) {
         let surface_texture = match self.surface.get_current_texture() {
             Ok(surface_texture) => surface_texture,
             Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
@@ -175,34 +172,12 @@ impl Gpu {
                 timestamp_writes: None,
             });
 
-            // Draw call using triangle shader.
-            {
-                let mut renderables_query = <&Mesh>::query();
-
-                render_pass.set_pipeline(self.asset().triangle_shader.pipeline());
-                for mesh in renderables_query.iter_mut(world) {
-                    render_pass.set_vertex_buffer(0, mesh.vertex_slice());
-                    render_pass.set_index_buffer(mesh.index_slice(), wgpu::IndexFormat::Uint32);
-                    render_pass.draw_indexed(mesh.indices(), 0, 0..1);
-                }
-            }
-
-            // Draw call using triangle shader with texture bindings.
-            {
-                let mut renderables_query = <(&Mesh, &Material)>::query();
-
-                render_pass.set_pipeline(self.asset().triangle_tex_shader.pipeline());
-                for (mesh, _) in renderables_query.iter_mut(world) {
-                    render_pass.set_vertex_buffer(0, mesh.vertex_slice());
-                    render_pass.set_index_buffer(mesh.index_slice(), wgpu::IndexFormat::Uint32);
-                    render_pass.set_bind_group(
-                        0,
-                        // FIXME: we should use the texture from the material component.
-                        self.asset().default_texture_2d.bind_group(),
-                        &[],
-                    );
-                    render_pass.draw_indexed(mesh.indices(), 0, 0..1);
-                }
+            let mut renderables_query = <(&Mesh, &Material)>::query();
+            for (mesh, material) in renderables_query.iter(world) {
+                render_pass.set_pipeline(material.shader.pipeline());
+                render_pass.set_vertex_buffer(0, mesh.vertex_slice());
+                render_pass.set_index_buffer(mesh.index_slice(), wgpu::IndexFormat::Uint32);
+                render_pass.draw_indexed(mesh.indices(), 0, 0..1);
             }
         }
 
@@ -221,12 +196,6 @@ impl Gpu {
 /// A collection of resources to be loaded for GPU.
 #[derive(Debug)]
 pub(super) struct GpuAsset {
-    /// Triangle shader.
-    pub(super) triangle_shader: Shader,
-
-    /// Triangle shader with texture bindings.
-    pub(super) triangle_tex_shader: Shader,
-
     /// Default 2D texture to use for the rendering pipeline.
     pub(super) default_texture_2d: Texture2D,
 }
@@ -234,26 +203,9 @@ pub(super) struct GpuAsset {
 impl GpuAsset {
     /// Loads the GPU assets.
     pub fn load(gpu: &Gpu, _config: &GpuConfig) -> Self {
-        let triangle_shader = Shader::new(
-            gpu,
-            &ShaderConfig::new(include_str!("shaders/triangle.wgsl"))
-                .with_vertex_type::<Vertex2DColor>(),
-        );
-
-        let triangle_tex_shader = Shader::new(
-            gpu,
-            &ShaderConfig::new(include_str!("shaders/triangle_tex.wgsl"))
-                .with_vertex_type::<Vertex2DTexture>()
-                .with_uniforms(&[UniformType::Texture2D]),
-        );
-
         let default_texture_2d = Texture2D::new(gpu, Self::default_texture_2d_config());
 
-        Self {
-            triangle_shader,
-            triangle_tex_shader,
-            default_texture_2d,
-        }
+        Self { default_texture_2d }
     }
 
     fn default_texture_2d_config() -> Texture2DConfig<Vec<u8>> {

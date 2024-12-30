@@ -40,7 +40,7 @@ impl Vertex for Vertex2DTexture {
         &[wgpu::VertexFormat::Float32x2, wgpu::VertexFormat::Float32x2];
 }
 
-/// A mesh component describes a shape that can be rendered with a GPU.
+/// A [`Mesh`] component describes a shape that can be rendered with a GPU.
 #[derive(Debug)]
 pub struct Mesh {
     pub(super) vertex_buffer: wgpu::Buffer,

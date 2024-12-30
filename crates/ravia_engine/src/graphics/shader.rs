@@ -1,4 +1,6 @@
-use super::{gpu, UniformType, Vertex};
+use crate::engine::EngineContext;
+
+use super::{UniformType, Vertex};
 
 /// [`ShaderConfig`] holds the source, entry points and other configuration for a shader.
 #[derive(Clone, Copy, Debug)]
@@ -55,28 +57,34 @@ pub struct Shader {
 
 impl Shader {
     /// Creates a new [`Shader`].
-    pub fn new(gpu: &gpu::Gpu, config: &ShaderConfig) -> Self {
-        let surface_config = gpu.surface_config.lock().unwrap();
+    pub fn new(ctx: &EngineContext, config: &ShaderConfig) -> Self {
+        let surface_config = ctx.gpu.surface_config.lock().unwrap();
 
-        let shader_module = gpu
+        let shader_module = ctx
+            .gpu
             .device
             .create_shader_module(wgpu::ShaderModuleDescriptor {
                 label: None,
                 source: wgpu::ShaderSource::Wgsl(config.source.into()),
             });
 
-        let pipeline_layout = gpu
-            .device
-            .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-                label: None,
-                bind_group_layouts: config
-                    .uniforms
-                    .iter()
-                    .map(|uniform_type| gpu.default_bind_group_layouts.uniform_layout(uniform_type))
-                    .collect::<Vec<_>>()
-                    .as_slice(),
-                push_constant_ranges: &[],
-            });
+        let pipeline_layout =
+            ctx.gpu
+                .device
+                .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+                    label: None,
+                    bind_group_layouts: config
+                        .uniforms
+                        .iter()
+                        .map(|uniform_type| {
+                            ctx.gpu
+                                .default_bind_group_layouts
+                                .uniform_layout(uniform_type)
+                        })
+                        .collect::<Vec<_>>()
+                        .as_slice(),
+                    push_constant_ranges: &[],
+                });
 
         let mut vertex_buffer_attributes = vec![];
         let vertex_buffer_layout = {
@@ -97,7 +105,8 @@ impl Shader {
             }]
         };
 
-        let pipeline = gpu
+        let pipeline = ctx
+            .gpu
             .device
             .create_render_pipeline(&wgpu::RenderPipelineDescriptor {
                 label: None,
