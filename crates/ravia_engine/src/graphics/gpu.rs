@@ -169,7 +169,8 @@ impl Gpu {
 
             let mut renderables_query = <&mut Mesh<Vertex2DColor>>::query();
 
-            // For now, we simply iterate over all the renderable entities and render them in a separate draw call.
+            // For now, we simply iterate over all the renderable components and render them in separate draw calls.
+            // Later we will optimize this by allocating a single buffer for multiple meshes and using a single draw call.
             render_pass.set_pipeline(asset.default_shader.pipeline());
             for mesh in renderables_query.iter_mut(world) {
                 let buffers = mesh.allocate_buffers(self);

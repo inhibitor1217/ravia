@@ -1,6 +1,6 @@
-use std::sync::Arc;
-
 use wgpu::util::DeviceExt;
+
+use crate::ecs;
 
 use super::Gpu;
 
@@ -35,13 +35,15 @@ impl Vertex for Vertex2DColor {
 }
 
 /// A mesh component describes a shape that can be rendered with a GPU.
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct Mesh<V: Vertex> {
     pub vertex_data: Vec<V>,
     pub index_data: Vec<u32>,
 
     pub(super) buffers: Option<MeshBuffers>,
 }
+
+assert_impl_all!(Mesh<Vertex2DColor>: ecs::storage::Component);
 
 impl<V: Vertex> Mesh<V> {
     /// Creates a new [`Mesh`].
@@ -88,8 +90,8 @@ impl<V: Vertex> Mesh<V> {
                 });
 
             self.buffers = Some(MeshBuffers {
-                vertex_buffer: Arc::new(vertex_buffer),
-                index_buffer: Arc::new(index_buffer),
+                vertex_buffer,
+                index_buffer,
             });
         }
 
@@ -101,10 +103,10 @@ impl<V: Vertex> Mesh<V> {
 ///
 /// For now, we just use a simple strategy to allocate new buffers for each mesh.
 /// This can be optimized later.
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub(super) struct MeshBuffers {
-    pub vertex_buffer: Arc<wgpu::Buffer>,
-    pub index_buffer: Arc<wgpu::Buffer>,
+    pub vertex_buffer: wgpu::Buffer,
+    pub index_buffer: wgpu::Buffer,
 }
 
 impl MeshBuffers {
