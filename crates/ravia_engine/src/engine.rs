@@ -244,7 +244,7 @@ impl Engine {
     /// Handles the single frame render.
     fn frame(&mut self) {
         self.schedule.execute(&mut self.world, &mut self.resources);
-        self.gpu.render(&mut self.world);
+        self.gpu.render(&self.world);
     }
 }
 
