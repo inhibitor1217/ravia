@@ -1,3 +1,4 @@
+use core::fmt;
 use std::{future::Future, sync::Arc};
 
 use log::{debug, info};
@@ -134,9 +135,9 @@ impl ApplicationHandler<EngineEvent> for EngineState {
 }
 
 /// [`Engine`] contains the resources for the components of the engine.
-#[derive(Debug)]
 pub struct Engine {
     world: ecs::World,
+    resources: ecs::Resources,
     schedule: ecs::Schedule,
 
     window: Arc<Window>,
@@ -189,10 +190,12 @@ impl Engine {
         let schedule = schedule_builder.build();
 
         Self {
+            world,
+            resources,
+            schedule,
+
             window,
             gpu,
-            world,
-            schedule,
         }
     }
 
@@ -239,7 +242,14 @@ impl Engine {
 
     /// Handles the single frame render.
     fn frame(&mut self) {
+        self.schedule.execute(&mut self.world, &mut self.resources);
         self.gpu.render(&mut self.world);
+    }
+}
+
+impl fmt::Debug for Engine {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "Ravia Engine")
     }
 }
 
