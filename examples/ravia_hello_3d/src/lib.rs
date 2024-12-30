@@ -31,23 +31,23 @@ fn init_world(world: &mut World, ctx: &EngineContext) {
     let camera = Camera::perspective_with_defaults(ctx);
     world.push((camera,));
 
-    let mesh = Mesh::new_indexed::<Vertex2DTexture>(
+    let mesh = Mesh::new_indexed::<Vertex3DTexture>(
         ctx,
         vec![
-            Vertex2DTexture {
-                position: vec2(-0.5, -0.5),
+            Vertex3DTexture {
+                position: vec3(-0.5, -0.5, 1.0),
                 data: vec2(0.0, 1.0),
             },
-            Vertex2DTexture {
-                position: vec2(0.5, -0.5),
+            Vertex3DTexture {
+                position: vec3(0.5, -0.5, 1.0),
                 data: vec2(1.0, 1.0),
             },
-            Vertex2DTexture {
-                position: vec2(-0.5, 0.5),
+            Vertex3DTexture {
+                position: vec3(-0.5, 0.5, 1.0),
                 data: vec2(0.0, 0.0),
             },
-            Vertex2DTexture {
-                position: vec2(0.5, 0.5),
+            Vertex3DTexture {
+                position: vec3(0.5, 0.5, 1.0),
                 data: vec2(1.0, 0.0),
             },
         ],
@@ -56,9 +56,9 @@ fn init_world(world: &mut World, ctx: &EngineContext) {
 
     let mut material = Material::new(
         ctx,
-        &ShaderConfig::new(include_str!("triangle_tex.wgsl"))
-            .with_vertex_type::<Vertex2DTexture>()
-            .with_uniforms(&[UniformType::Texture2D]),
+        &ShaderConfig::new(include_str!("triangle_tex_perspective.wgsl"))
+            .with_vertex_type::<Vertex3DTexture>()
+            .with_uniforms(&[UniformType::Texture2D, UniformType::Camera]),
     );
     let texture = Texture::default_2d(ctx);
     material.texture = Some(texture);

@@ -53,6 +53,14 @@ where
 
 unsafe impl<D: bytemuck::Pod + bytemuck::Zeroable> bytemuck::Pod for Vertex3D<D> {}
 
+/// A 3D vertex with a texture coordinate.
+pub type Vertex3DTexture = Vertex3D<math::Vec2>;
+
+impl Vertex for Vertex3DTexture {
+    const ATTRIBUTE_FORMATS: &[wgpu::VertexFormat] =
+        &[wgpu::VertexFormat::Float32x3, wgpu::VertexFormat::Float32x2];
+}
+
 /// A [`Mesh`] component describes a shape that can be rendered with a GPU.
 #[derive(Debug)]
 pub struct Mesh {

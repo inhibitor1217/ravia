@@ -1,6 +1,6 @@
 use std::sync::{Arc, Mutex};
 
-use log::{error, info};
+use log::{error, info, warn};
 
 use crate::{
     ecs::{self, IntoQuery},
@@ -8,7 +8,11 @@ use crate::{
 };
 
 use super::{
-    camera::Camera, material::Material, mesh::Mesh, texture::Texture, uniform::{Uniform, UniformType}
+    camera::Camera,
+    material::Material,
+    mesh::Mesh,
+    texture::Texture,
+    uniform::{Uniform, UniformType},
 };
 
 /// [`Gpu`] holds the WebGPU device and its resources.
@@ -148,7 +152,7 @@ impl Gpu {
                     label: Some("ravia_engine"),
                 });
 
-        {
+        'render_pass: {
             let mut render_pass = command_encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("ravia_engine"),
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
@@ -164,14 +168,30 @@ impl Gpu {
                 timestamp_writes: None,
             });
 
+            let mut camera_query = <&Camera>::query();
+            let camera = if let Some(camera) = camera_query.iter(world).next() {
+                camera
+            } else {
+                warn!(target: "ravia_engine::graphics::gpu", "No camera found, skipping frame");
+                break 'render_pass;
+            };
+
             let mut renderables_query = <(&Mesh, &Material)>::query();
             for (mesh, material) in renderables_query.iter(world) {
                 render_pass.set_pipeline(material.shader.pipeline());
                 render_pass.set_vertex_buffer(0, mesh.vertex_slice());
                 render_pass.set_index_buffer(mesh.index_slice(), wgpu::IndexFormat::Uint32);
-                if let Some(texture) = &material.texture {
-                    render_pass.set_bind_group(0, texture.bind_group(), &[]);
+
+                if let Some(index) = material.shader.bind_group_index(UniformType::Texture2D) {
+                    if let Some(texture) = &material.texture {
+                        render_pass.set_bind_group(index, texture.bind_group(), &[]);
+                    }
                 }
+
+                if let Some(index) = material.shader.bind_group_index(UniformType::Camera) {
+                    render_pass.set_bind_group(index, camera.bind_group(), &[]);
+                }
+
                 render_pass.draw_indexed(mesh.indices(), 0, 0..1);
             }
         }

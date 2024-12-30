@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::engine::EngineContext;
 
 use super::{mesh::Vertex, uniform::UniformType};
@@ -53,6 +55,7 @@ impl Default for ShaderConfig<'_> {
 #[derive(Debug)]
 pub struct Shader {
     pipeline: wgpu::RenderPipeline,
+    uniforms: HashMap<UniformType, u32>,
 }
 
 impl Shader {
@@ -68,21 +71,23 @@ impl Shader {
                 source: wgpu::ShaderSource::Wgsl(config.source.into()),
             });
 
+        let mut uniforms = HashMap::new();
+        let mut bind_group_layouts = vec![];
+        for (i, uniform_type) in config.uniforms.iter().enumerate() {
+            uniforms.insert(*uniform_type, i as u32);
+            bind_group_layouts.push(
+                ctx.gpu
+                    .default_bind_group_layouts
+                    .uniform_layout(uniform_type),
+            );
+        }
+
         let pipeline_layout =
             ctx.gpu
                 .device
                 .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                     label: None,
-                    bind_group_layouts: config
-                        .uniforms
-                        .iter()
-                        .map(|uniform_type| {
-                            ctx.gpu
-                                .default_bind_group_layouts
-                                .uniform_layout(uniform_type)
-                        })
-                        .collect::<Vec<_>>()
-                        .as_slice(),
+                    bind_group_layouts: &bind_group_layouts,
                     push_constant_ranges: &[],
                 });
 
@@ -142,11 +147,18 @@ impl Shader {
                 cache: None,
             });
 
-        Self { pipeline }
+        Self { pipeline, uniforms }
     }
 
     /// Returns the underlying [`wgpu::RenderPipeline`].
     pub fn pipeline(&self) -> &wgpu::RenderPipeline {
         &self.pipeline
+    }
+
+    /// Returns the bind group index for the given uniform type.
+    ///
+    /// Returns `None` if the uniform type is not used in this shader.
+    pub fn bind_group_index(&self, uniform_type: UniformType) -> Option<u32> {
+        self.uniforms.get(&uniform_type).copied()
     }
 }
