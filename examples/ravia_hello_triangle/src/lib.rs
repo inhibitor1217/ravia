@@ -23,6 +23,9 @@ pub fn run() {
     boot(EngineConfig {
         window_title: "Hello Triangle",
         init_world,
+        gpu: GpuConfig {
+            default_shader_source: include_str!("triangle.wgsl"),
+        },
         ..Default::default()
     });
 }

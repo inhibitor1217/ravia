@@ -6,6 +6,21 @@ use crate::ecs::{self, IntoQuery};
 
 use super::{Mesh, Shader, ShaderConfig, Vertex2DColor, VertexBufferConfig};
 
+/// Configuration for the GPU.
+#[derive(Debug, Clone, Copy)]
+pub struct GpuConfig {
+    /// Default shader source.
+    pub default_shader_source: &'static str,
+}
+
+impl Default for GpuConfig {
+    fn default() -> Self {
+        Self {
+            default_shader_source: "",
+        }
+    }
+}
+
 /// [`Gpu`] holds the WebGPU device and its resources.
 #[derive(Debug)]
 pub struct Gpu {
@@ -33,7 +48,7 @@ pub struct Gpu {
 
 impl Gpu {
     /// Creates a new [`Gpu`] and initializes its resources.
-    pub async fn new(window: Arc<winit::window::Window>) -> Self {
+    pub async fn new(window: Arc<winit::window::Window>, config: &GpuConfig) -> Self {
         let instance = wgpu::Instance::new(Default::default());
 
         let surface = instance
@@ -92,7 +107,7 @@ impl Gpu {
             asset: None,
         };
 
-        gpu.asset = Some(GpuAsset::load(&gpu));
+        gpu.asset = Some(GpuAsset::load(&gpu, config));
 
         gpu
     }
@@ -199,7 +214,7 @@ pub(super) struct GpuAsset {
 
 impl GpuAsset {
     /// Loads the GPU assets.
-    pub fn load(gpu: &Gpu) -> Self {
+    pub fn load(gpu: &Gpu, config: &GpuConfig) -> Self {
         let default_texture_2d_bind_group_layout =
             gpu.device
                 .create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
@@ -226,7 +241,7 @@ impl GpuAsset {
 
         let default_shader = Shader::new(
             gpu,
-            ShaderConfig::new(include_str!("shaders/triangle.wgsl"))
+            ShaderConfig::new(config.default_shader_source)
                 .with_vertex_buffer_config(VertexBufferConfig::new::<Vertex2DColor>()),
         );
 
