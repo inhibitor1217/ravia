@@ -1,5 +1,3 @@
-use core::fmt;
-
 use crate::{ecs, engine::EngineContext};
 
 use super::{
@@ -8,6 +6,7 @@ use super::{
 };
 
 /// A [`Material`] component describes how the shape should be rendered.
+#[derive(Debug)]
 pub struct Material {
     pub shader: Shader,
     pub texture: Option<Texture>,
@@ -22,11 +21,5 @@ impl Material {
             shader: Shader::new(ctx, shader_config),
             texture: None,
         }
-    }
-}
-
-impl fmt::Debug for Material {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Material")
     }
 }

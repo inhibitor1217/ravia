@@ -2,7 +2,7 @@ use wgpu::util::DeviceExt;
 
 use crate::{ecs, engine::EngineContext, math};
 
-use super::uniform::{Uniform, UniformType};
+use super::uniform::Uniform;
 
 /// A [`Camera`] is used to render the scene from a specific point of view.
 #[derive(Debug)]
@@ -74,26 +74,8 @@ impl Camera {
     }
 }
 
-impl Camera {
-    pub(super) const CAMERA_BIND_GROUP_LAYOUT_ENTRIES: &[wgpu::BindGroupLayoutEntry] =
-        &[wgpu::BindGroupLayoutEntry {
-            binding: 0,
-            visibility: wgpu::ShaderStages::VERTEX,
-            ty: wgpu::BindingType::Buffer {
-                ty: wgpu::BufferBindingType::Uniform,
-                has_dynamic_offset: false,
-                min_binding_size: None,
-            },
-            count: None,
-        }];
-}
-
 impl Uniform for Camera {
     fn bind_group(&self) -> &wgpu::BindGroup {
         &self.bind_group
-    }
-
-    fn uniform_type(&self) -> UniformType {
-        UniformType::Camera
     }
 }

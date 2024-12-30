@@ -29,7 +29,7 @@ pub fn run() {
 
 fn init_world(world: &mut World, ctx: &EngineContext) {
     let camera = Camera::noop(ctx);
-    world.push((camera,));
+    world.push((camera, Transform::identity(ctx, true)));
 
     let mesh = Mesh::new::<Vertex2DColor>(
         ctx,
@@ -54,5 +54,5 @@ fn init_world(world: &mut World, ctx: &EngineContext) {
         &ShaderConfig::new(include_str!("triangle.wgsl")).with_vertex_type::<Vertex2DColor>(),
     );
 
-    world.push((mesh, material));
+    world.push((mesh, material, Transform::identity(ctx, false)));
 }

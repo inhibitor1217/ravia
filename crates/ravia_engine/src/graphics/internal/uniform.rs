@@ -2,9 +2,6 @@
 pub trait Uniform {
     /// Specifies the bind group of the uniform variable.
     fn bind_group(&self) -> &wgpu::BindGroup;
-
-    /// Specifies the uniform type, which marks the bind group layout to use.
-    fn uniform_type(&self) -> UniformType;
 }
 
 /// Specifies the type of the uniform variable, whose bindings are
@@ -15,4 +12,8 @@ pub enum UniformType {
     Texture2D,
     /// Binds a [`super::camera::Camera`] type as a uniform.
     Camera,
+    /// Binds a camera [`super::transform::Transform`] type as a uniform.
+    CameraTransform,
+    /// Binds a model (mesh) [`super::transform::Transform`] type as a uniform.
+    ModelTransform,
 }

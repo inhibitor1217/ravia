@@ -29,7 +29,7 @@ pub fn run() {
 
 fn init_world(world: &mut World, ctx: &EngineContext) {
     let camera = Camera::perspective_with_defaults(ctx);
-    world.push((camera,));
+    world.push((camera, Transform::identity(ctx, true)));
 
     let mesh = Mesh::new_indexed::<Vertex3DTexture>(
         ctx,
@@ -58,10 +58,15 @@ fn init_world(world: &mut World, ctx: &EngineContext) {
         ctx,
         &ShaderConfig::new(include_str!("triangle_tex_perspective.wgsl"))
             .with_vertex_type::<Vertex3DTexture>()
-            .with_uniforms(&[UniformType::Texture2D, UniformType::Camera]),
+            .with_uniforms(&[
+                UniformType::Texture2D,
+                UniformType::Camera,
+                UniformType::CameraTransform,
+                UniformType::ModelTransform,
+            ]),
     );
     let texture = Texture::default_2d(ctx);
     material.texture = Some(texture);
 
-    world.push((mesh, material));
+    world.push((mesh, material, Transform::identity(ctx, false)));
 }

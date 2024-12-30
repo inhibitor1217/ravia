@@ -9,6 +9,7 @@ pub use internal::{
     mesh::{Mesh, Vertex, Vertex2D, Vertex2DColor, Vertex2DTexture, Vertex3D, Vertex3DTexture},
     shader::{Shader, ShaderConfig},
     texture::{Texture, TextureFilterMode},
+    transform::Transform,
     uniform::{Uniform, UniformType},
 };
 pub use system::system;

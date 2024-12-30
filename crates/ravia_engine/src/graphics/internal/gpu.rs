@@ -11,7 +11,7 @@ use super::{
     camera::Camera,
     material::Material,
     mesh::Mesh,
-    texture::Texture,
+    transform::Transform,
     uniform::{Uniform, UniformType},
 };
 
@@ -168,16 +168,16 @@ impl Gpu {
                 timestamp_writes: None,
             });
 
-            let mut camera_query = <&Camera>::query();
-            let camera = if let Some(camera) = camera_query.iter(world).next() {
-                camera
+            let mut camera_query = <(&Camera, &Transform)>::query();
+            let (camera, camera_transform) = if let Some(entity) = camera_query.iter(world).next() {
+                entity
             } else {
                 warn!(target: "ravia_engine::graphics::gpu", "No camera found, skipping frame");
                 break 'render_pass;
             };
 
-            let mut renderables_query = <(&Mesh, &Material)>::query();
-            for (mesh, material) in renderables_query.iter(world) {
+            let mut renderables_query = <(&Mesh, &Material, &Transform)>::query();
+            for (mesh, material, model_transform) in renderables_query.iter(world) {
                 render_pass.set_pipeline(material.shader.pipeline());
                 render_pass.set_vertex_buffer(0, mesh.vertex_slice());
                 render_pass.set_index_buffer(mesh.index_slice(), wgpu::IndexFormat::Uint32);
@@ -192,6 +192,20 @@ impl Gpu {
                     render_pass.set_bind_group(index, camera.bind_group(), &[]);
                 }
 
+                if let Some(index) = material
+                    .shader
+                    .bind_group_index(UniformType::CameraTransform)
+                {
+                    render_pass.set_bind_group(index, camera_transform.bind_group(), &[]);
+                }
+
+                if let Some(index) = material
+                    .shader
+                    .bind_group_index(UniformType::ModelTransform)
+                {
+                    render_pass.set_bind_group(index, model_transform.bind_group(), &[]);
+                }
+
                 render_pass.draw_indexed(mesh.indices(), 0, 0..1);
             }
         }
@@ -204,6 +218,8 @@ impl Gpu {
 #[derive(Debug)]
 pub(super) struct GpuDefaultBindGroupLayouts {
     pub camera: wgpu::BindGroupLayout,
+    pub camera_transform: wgpu::BindGroupLayout,
+    pub model_transform: wgpu::BindGroupLayout,
     pub texture_2d: wgpu::BindGroupLayout,
 }
 
@@ -213,11 +229,63 @@ impl GpuDefaultBindGroupLayouts {
         Self {
             camera: device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 label: None,
-                entries: Camera::CAMERA_BIND_GROUP_LAYOUT_ENTRIES,
+                entries: &[wgpu::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: wgpu::ShaderStages::VERTEX,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Uniform,
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                }],
+            }),
+            camera_transform: device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                label: None,
+                entries: &[wgpu::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: wgpu::ShaderStages::VERTEX,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Uniform,
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                }],
+            }),
+            model_transform: device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                label: None,
+                entries: &[wgpu::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: wgpu::ShaderStages::VERTEX,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Uniform,
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                }],
             }),
             texture_2d: device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 label: None,
-                entries: Texture::TEXTURE_2D_BIND_GROUP_LAYOUT_ENTRIES,
+                entries: &[
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 0,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Texture {
+                            view_dimension: wgpu::TextureViewDimension::D2,
+                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
+                            multisampled: false,
+                        },
+                        count: None,
+                    },
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 1,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
+                        count: None,
+                    },
+                ],
             }),
         }
     }
@@ -226,6 +294,8 @@ impl GpuDefaultBindGroupLayouts {
     pub fn uniform_layout(&self, uniform_type: &UniformType) -> &wgpu::BindGroupLayout {
         match uniform_type {
             UniformType::Camera => &self.camera,
+            UniformType::CameraTransform => &self.camera_transform,
+            UniformType::ModelTransform => &self.model_transform,
             UniformType::Texture2D => &self.texture_2d,
         }
     }

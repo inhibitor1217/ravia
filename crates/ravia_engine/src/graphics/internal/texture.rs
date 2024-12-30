@@ -4,7 +4,7 @@ use wgpu::util::DeviceExt;
 
 use crate::{engine::EngineContext, math};
 
-use super::uniform::{Uniform, UniformType};
+use super::uniform::Uniform;
 
 /// Filter mode for the texture.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -57,7 +57,6 @@ pub struct Texture {
     _sampler: wgpu::Sampler,
     bind_group: wgpu::BindGroup,
     filter_mode: TextureFilterMode,
-    uniform_type: UniformType,
 }
 
 impl Texture {
@@ -123,7 +122,6 @@ impl Texture {
             _sampler: sampler,
             bind_group,
             filter_mode,
-            uniform_type: UniformType::Texture2D,
         }
     }
 
@@ -193,33 +191,8 @@ impl Texture {
     }
 }
 
-impl Texture {
-    pub(super) const TEXTURE_2D_BIND_GROUP_LAYOUT_ENTRIES: &[wgpu::BindGroupLayoutEntry] = &[
-        wgpu::BindGroupLayoutEntry {
-            binding: 0,
-            visibility: wgpu::ShaderStages::FRAGMENT,
-            ty: wgpu::BindingType::Texture {
-                view_dimension: wgpu::TextureViewDimension::D2,
-                sample_type: wgpu::TextureSampleType::Float { filterable: true },
-                multisampled: false,
-            },
-            count: None,
-        },
-        wgpu::BindGroupLayoutEntry {
-            binding: 1,
-            visibility: wgpu::ShaderStages::FRAGMENT,
-            ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
-            count: None,
-        },
-    ];
-}
-
 impl Uniform for Texture {
     fn bind_group(&self) -> &wgpu::BindGroup {
         &self.bind_group
-    }
-
-    fn uniform_type(&self) -> UniformType {
-        self.uniform_type
     }
 }
