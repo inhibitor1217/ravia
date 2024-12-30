@@ -7,18 +7,10 @@ use crate::ecs::{self, IntoQuery};
 use super::{Mesh, Shader, ShaderConfig, Texture, Texture2D, Texture2DConfig, Vertex2DColor};
 
 /// Configuration for the GPU.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Default)]
 pub struct GpuConfig {
     /// Default shader configuration.
     pub default_shader: ShaderConfig<'static>,
-}
-
-impl Default for GpuConfig {
-    fn default() -> Self {
-        Self {
-            default_shader: ShaderConfig::default(),
-        }
-    }
 }
 
 /// [`Gpu`] holds the WebGPU device and its resources.
