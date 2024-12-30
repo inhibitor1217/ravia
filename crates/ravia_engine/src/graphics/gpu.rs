@@ -266,7 +266,7 @@ impl GpuAsset {
         for i in 0..8 {
             for j in 0..8 {
                 let use_color = ((i + j) % 2) > 0;
-                data[i * 8 * 4 + j * 4 + 0] = if use_color { BRIGHT } else { DARK };
+                data[i * 8 * 4 + j * 4] = if use_color { BRIGHT } else { DARK };
                 data[i * 8 * 4 + j * 4 + 1] = if use_color { BRIGHT } else { DARK };
                 data[i * 8 * 4 + j * 4 + 2] = if use_color { BRIGHT } else { DARK };
                 data[i * 8 * 4 + j * 4 + 3] = ALPHA;
