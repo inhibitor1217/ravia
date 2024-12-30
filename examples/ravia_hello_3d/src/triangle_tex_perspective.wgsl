@@ -9,15 +9,15 @@ struct VertexOutput {
 };
 
 struct CameraUniform {
-  @location(0) projection: mat4x4<f32>,
+  projection: mat4x4<f32>,
 };
 
 struct CameraTransformUniform {
-  @location(0) inv_transform: mat4x4<f32>,
+  inv_transform: mat4x4<f32>,
 };
 
 struct ModelTransformUniform {
-  @location(0) transform: mat4x4<f32>,
+  transform: mat4x4<f32>,
 };
 
 @group(0) @binding(0) var tex: texture_2d<f32>;
