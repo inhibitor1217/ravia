@@ -22,7 +22,7 @@ pub fn run() {
 
     boot(EngineConfig {
         window_title: "Hello Triangle",
-        init_world: init_world,
+        init_world,
         ..Default::default()
     });
 }
