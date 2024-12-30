@@ -185,7 +185,7 @@ impl Engine {
         resources.insert(EngineContext { gpu: gpu.clone() });
 
         let mut schedule_builder = ecs::Schedule::builder();
-        graphics::system::subsystem(&mut schedule_builder);
+        graphics::system(&mut schedule_builder);
         let schedule = schedule_builder.build();
 
         (config.init_world)(&mut world, &EngineContext { gpu: gpu.clone() });

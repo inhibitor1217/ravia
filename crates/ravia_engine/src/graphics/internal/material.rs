@@ -2,7 +2,10 @@ use core::fmt;
 
 use crate::{ecs, engine::EngineContext};
 
-use super::{Shader, ShaderConfig, Texture};
+use super::{
+    shader::{Shader, ShaderConfig},
+    texture::Texture,
+};
 
 /// A [`Material`] component describes how the shape should be rendered.
 pub struct Material {

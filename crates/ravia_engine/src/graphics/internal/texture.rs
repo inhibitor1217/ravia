@@ -4,7 +4,7 @@ use wgpu::util::DeviceExt;
 
 use crate::engine::EngineContext;
 
-use super::{Uniform, UniformType};
+use super::uniform::{Uniform, UniformType};
 
 /// Filter mode for the texture.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

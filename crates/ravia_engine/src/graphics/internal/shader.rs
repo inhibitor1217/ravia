@@ -1,6 +1,6 @@
 use crate::engine::EngineContext;
 
-use super::{UniformType, Vertex};
+use super::{mesh::Vertex, uniform::UniformType};
 
 /// [`ShaderConfig`] holds the source, entry points and other configuration for a shader.
 #[derive(Clone, Copy, Debug)]

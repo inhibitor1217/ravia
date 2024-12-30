@@ -4,7 +4,12 @@ use log::{error, info};
 
 use crate::ecs::{self, IntoQuery};
 
-use super::{Material, Mesh, Texture, Uniform, UniformType};
+use super::{
+    material::Material,
+    mesh::Mesh,
+    texture::Texture,
+    uniform::{Uniform, UniformType},
+};
 
 /// [`Gpu`] holds the WebGPU device and its resources.
 #[derive(Debug)]
@@ -179,7 +184,7 @@ impl Gpu {
 
 #[derive(Debug)]
 pub(super) struct GpuDefaultBindGroupLayouts {
-    pub(super) texture_2d: wgpu::BindGroupLayout,
+    pub texture_2d: wgpu::BindGroupLayout,
 }
 
 impl GpuDefaultBindGroupLayouts {
