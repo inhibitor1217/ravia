@@ -21,7 +21,7 @@ pub fn run() {
     init_log();
 
     boot(EngineConfig {
-        window_title: "Hello Triangle",
+        window_title: "Hello Texture",
         init_world,
         ..Default::default()
     });
