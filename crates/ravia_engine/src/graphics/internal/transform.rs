@@ -7,7 +7,7 @@ use super::uniform::Uniform;
 /// A [`Transform`] component describes the position, rotation, and scale of an entity.
 #[derive(Debug)]
 pub struct Transform {
-    pub transform: math::Mat4,
+    transform: math::Mat4,
 
     _buffer: wgpu::Buffer,
     bind_group: wgpu::BindGroup,
@@ -61,6 +61,11 @@ impl Transform {
     /// Creates a new identity [`Transform`].
     pub fn identity(ctx: &EngineContext, camera: bool) -> Self {
         Self::new(ctx, math::Mat4::IDENTITY, camera)
+    }
+
+    /// Returns the transformation matrix of the transform.
+    pub fn transform(&self) -> &math::Mat4 {
+        &self.transform
     }
 }
 

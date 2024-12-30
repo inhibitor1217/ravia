@@ -7,8 +7,7 @@ use super::uniform::Uniform;
 /// A [`Camera`] is used to render the scene from a specific point of view.
 #[derive(Debug)]
 pub struct Camera {
-    /// The projection matrix of the camera.
-    pub projection: math::Mat4,
+    projection: math::Mat4,
 
     _buffer: wgpu::Buffer,
     bind_group: wgpu::BindGroup,
@@ -71,6 +70,11 @@ impl Camera {
         let width = surface_config.width as f32;
         let height = surface_config.height as f32;
         Self::perspective(ctx, 45.0, width / height, 0.1, 100.0)
+    }
+
+    /// Returns the projection matrix of the camera.
+    pub fn projection(&self) -> &math::Mat4 {
+        &self.projection
     }
 }
 

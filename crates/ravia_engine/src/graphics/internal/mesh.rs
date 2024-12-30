@@ -64,9 +64,8 @@ impl Vertex for Vertex3DTexture {
 /// A [`Mesh`] component describes a shape that can be rendered with a GPU.
 #[derive(Debug)]
 pub struct Mesh {
-    pub(super) vertex_buffer: wgpu::Buffer,
-    pub(super) index_buffer: wgpu::Buffer,
-
+    vertex_buffer: wgpu::Buffer,
+    index_buffer: wgpu::Buffer,
     num_vertices: u32,
     num_indices: u32,
 }
