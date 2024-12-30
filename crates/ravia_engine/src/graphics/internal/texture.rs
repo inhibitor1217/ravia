@@ -2,7 +2,7 @@ use std::ops::Deref;
 
 use wgpu::util::DeviceExt;
 
-use crate::engine::EngineContext;
+use crate::{engine::EngineContext, math};
 
 use super::uniform::{Uniform, UniformType};
 
@@ -64,18 +64,16 @@ impl Texture {
     /// Creates a new 2D [`Texture`].
     pub fn new_2d<D: Deref<Target = [u8]>>(
         ctx: &EngineContext,
-        size: (u32, u32),
+        size: math::UVec2,
         data: D,
         filter_mode: TextureFilterMode,
     ) -> Self {
-        let (width, height) = size;
-
         let texture = ctx.gpu.device.create_texture_with_data(
             &ctx.gpu.queue,
             &wgpu::TextureDescriptor {
                 size: wgpu::Extent3d {
-                    width,
-                    height,
+                    width: size.x,
+                    height: size.y,
                     depth_or_array_layers: 1,
                 },
                 mip_level_count: 1,
@@ -149,7 +147,7 @@ impl Texture {
 
         Self::new_2d(
             ctx,
-            (width as u32, height as u32),
+            math::uvec2(width as u32, height as u32),
             data,
             TextureFilterMode::Point,
         )

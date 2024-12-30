@@ -32,20 +32,20 @@ fn init_world(world: &mut World, ctx: &EngineContext) {
         ctx,
         vec![
             Vertex2DTexture {
-                position: [-0.5, -0.5],
-                data: [0.0, 1.0],
+                position: vec2(-0.5, -0.5),
+                data: vec2(0.0, 1.0),
             },
             Vertex2DTexture {
-                position: [0.5, -0.5],
-                data: [1.0, 1.0],
+                position: vec2(0.5, -0.5),
+                data: vec2(1.0, 1.0),
             },
             Vertex2DTexture {
-                position: [-0.5, 0.5],
-                data: [0.0, 0.0],
+                position: vec2(-0.5, 0.5),
+                data: vec2(0.0, 0.0),
             },
             Vertex2DTexture {
-                position: [0.5, 0.5],
-                data: [1.0, 0.0],
+                position: vec2(0.5, 0.5),
+                data: vec2(1.0, 0.0),
             },
         ],
         vec![0, 1, 3, 0, 3, 2],

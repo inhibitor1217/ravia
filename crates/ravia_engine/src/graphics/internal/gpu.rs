@@ -2,7 +2,10 @@ use std::sync::{Arc, Mutex};
 
 use log::{error, info};
 
-use crate::ecs::{self, IntoQuery};
+use crate::{
+    ecs::{self, IntoQuery},
+    math,
+};
 
 use super::{
     material::Material,
@@ -74,12 +77,12 @@ impl Gpu {
             .find(|f| f.is_srgb())
             .copied()
             .unwrap_or(surface_capabilities.formats[0]);
-        let (surface_width, surface_height) = Self::window_size(&window);
+        let size = Self::window_size(&window);
         let surface_config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
             format: surface_format,
-            width: surface_width,
-            height: surface_height,
+            width: size.x,
+            height: size.y,
             present_mode: surface_capabilities.present_modes[0],
             alpha_mode: surface_capabilities.alpha_modes[0],
             view_formats: vec![],
@@ -101,16 +104,16 @@ impl Gpu {
     }
 
     /// Retrieves the current display size from the window.
-    pub fn window_size(window: &winit::window::Window) -> (u32, u32) {
+    pub fn window_size(window: &winit::window::Window) -> math::UVec2 {
         let winit::dpi::PhysicalSize { width, height } = window.inner_size();
-        (width.max(1), height.max(1))
+        math::uvec2(width.max(1), height.max(1))
     }
 
     /// Resizes the GPU resources to match the window size.
-    pub fn resize(&self, width: u32, height: u32) {
+    pub fn resize(&self, size: math::UVec2) {
         let mut surface_config = self.surface_config.lock().unwrap();
-        surface_config.width = width.max(1);
-        surface_config.height = height.max(1);
+        surface_config.width = size.x.max(1);
+        surface_config.height = size.y.max(1);
         self.surface.configure(&self.device, &surface_config);
     }
 
@@ -124,8 +127,7 @@ impl Gpu {
             Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
                 info!(target: "ravia_engine::graphics::gpu", "Surface lost or outdated, resizing");
 
-                let (w, h) = Self::window_size(&self.window);
-                self.resize(w, h);
+                self.resize(Self::window_size(&self.window));
                 self.surface
                     .get_current_texture()
                     .expect("Failed to get current surface texture")

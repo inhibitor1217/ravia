@@ -10,7 +10,7 @@ use winit::{
     window::Window,
 };
 
-use crate::{ecs, graphics};
+use crate::{ecs, graphics, math};
 
 /// World initializer.
 pub type InitWorld = fn(&mut ecs::World, &EngineContext);
@@ -20,10 +20,8 @@ pub type InitWorld = fn(&mut ecs::World, &EngineContext);
 pub struct EngineConfig {
     /// Window title.
     pub window_title: &'static str,
-    /// Display width. Only effective in native mode.
-    pub display_width: u32,
-    /// Display height. Only effective in native mode.
-    pub display_height: u32,
+    /// Display size. Only effective in native mode.
+    pub display_size: math::UVec2,
     /// World initializer.
     pub init_world: InitWorld,
 }
@@ -32,8 +30,7 @@ impl Default for EngineConfig {
     fn default() -> Self {
         Self {
             window_title: "",
-            display_width: 1024,
-            display_height: 720,
+            display_size: math::uvec2(1024, 720),
             init_world: |_, _| {},
         }
     }
@@ -119,7 +116,7 @@ impl ApplicationHandler<EngineEvent> for EngineState {
                 engine.frame();
             }
             WindowEvent::Resized(physical_size) => {
-                engine.resize(physical_size.width, physical_size.height);
+                engine.resize(math::uvec2(physical_size.width, physical_size.height));
             }
             WindowEvent::CloseRequested => {
                 info!(target: "ravia_engine::engine_state", "Window close requested, exiting.");
@@ -205,8 +202,8 @@ impl Engine {
         let window_attrs = Window::default_attributes()
             .with_title(config.window_title)
             .with_inner_size(LogicalSize::new(
-                config.display_width,
-                config.display_height,
+                config.display_size.x,
+                config.display_size.y,
             ));
 
         let window = event_loop
@@ -232,8 +229,8 @@ impl Engine {
     }
 
     /// Handles the display resize.
-    fn resize(&self, width: u32, height: u32) {
-        self.gpu.resize(width, height);
+    fn resize(&self, size: math::UVec2) {
+        self.gpu.resize(size);
     }
 
     /// Requests a new frame.

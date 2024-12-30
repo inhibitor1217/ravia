@@ -1,6 +1,6 @@
 use wgpu::util::DeviceExt;
 
-use crate::{ecs, engine::EngineContext};
+use crate::{ecs, engine::EngineContext, math};
 
 /// A trait for vertex data.
 ///
@@ -18,17 +18,17 @@ pub struct Vertex2D<D>
 where
     D: bytemuck::Pod + bytemuck::Zeroable,
 {
-    pub position: [f32; 2],
+    pub position: math::Vec2,
     pub data: D,
 }
 
 unsafe impl<D: bytemuck::Pod + bytemuck::Zeroable> bytemuck::Pod for Vertex2D<D> {}
 
 /// A 2D vertex with a color.
-pub type Vertex2DColor = Vertex2D<[f32; 3]>;
+pub type Vertex2DColor = Vertex2D<math::Vec3>;
 
 /// A 2D vertex with a texture coordinate.
-pub type Vertex2DTexture = Vertex2D<[f32; 2]>;
+pub type Vertex2DTexture = Vertex2D<math::Vec2>;
 
 impl Vertex for Vertex2DColor {
     const ATTRIBUTE_FORMATS: &[wgpu::VertexFormat] =
@@ -47,7 +47,7 @@ pub struct Vertex3D<D>
 where
     D: bytemuck::Pod + bytemuck::Zeroable,
 {
-    pub position: [f32; 3],
+    pub position: math::Vec3,
     pub data: D,
 }
 
