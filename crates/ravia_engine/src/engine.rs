@@ -15,6 +15,9 @@ use crate::{ecs, graphics, math, time};
 /// World initializer.
 pub type InitWorld = fn(&mut ecs::World, &EngineContext);
 
+/// User system initializer.
+pub type InitSystem = fn(&mut ecs::systems::Builder);
+
 /// Engine configuration.
 #[derive(Clone, Copy, Debug)]
 pub struct EngineConfig {
@@ -24,6 +27,8 @@ pub struct EngineConfig {
     pub display_size: math::UVec2,
     /// World initializer.
     pub init_world: InitWorld,
+    /// User system initializer.
+    pub init_system: InitSystem,
 }
 
 impl Default for EngineConfig {
@@ -32,6 +37,7 @@ impl Default for EngineConfig {
             window_title: "",
             display_size: math::uvec2(1024, 720),
             init_world: |_, _| {},
+            init_system: |_| {},
         }
     }
 }
@@ -182,22 +188,14 @@ impl Engine {
         let mut world = ecs::World::default();
 
         let mut resources = ecs::Resources::default();
-        resources.insert(EngineContext {
-            gpu: gpu.clone(),
-            time: time::Time::ZERO,
-        });
+        resources.insert(EngineContext { gpu: gpu.clone() });
 
         let mut schedule_builder = ecs::Schedule::builder();
         graphics::system(&mut schedule_builder);
+        (config.init_system)(&mut schedule_builder);
         let schedule = schedule_builder.build();
 
-        (config.init_world)(
-            &mut world,
-            &EngineContext {
-                gpu: gpu.clone(),
-                time: time::Time::ZERO,
-            },
-        );
+        (config.init_world)(&mut world, &EngineContext { gpu: gpu.clone() });
 
         Self {
             world,
@@ -273,7 +271,6 @@ impl fmt::Debug for Engine {
 #[derive(Debug)]
 pub struct EngineContext {
     pub gpu: Arc<graphics::Gpu>,
-    pub time: time::Time,
 }
 
 fn resolve_future<F: Future<Output = ()> + 'static>(f: F) {
