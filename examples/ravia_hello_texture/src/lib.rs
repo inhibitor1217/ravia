@@ -29,7 +29,7 @@ pub fn run() {
 
 fn init_world(world: &mut World, ctx: &EngineContext) {
     let camera = Camera::noop(ctx);
-    world.push((camera, Transform::identity(ctx, true)));
+    world.push((camera, Transform::identity(ctx)));
 
     let mesh = Mesh::new_indexed::<Vertex2DTexture>(
         ctx,
@@ -63,5 +63,5 @@ fn init_world(world: &mut World, ctx: &EngineContext) {
     let texture = Texture::default_2d(ctx);
     material.texture = Some(texture);
 
-    world.push((mesh, material, Transform::identity(ctx, false)));
+    world.push((mesh, material, Transform::identity(ctx)));
 }

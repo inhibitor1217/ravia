@@ -1,6 +1,5 @@
 // implementation module
 mod internal;
-mod system;
 
 pub use internal::{
     camera::Camera,
@@ -8,8 +7,8 @@ pub use internal::{
     material::Material,
     mesh::{Mesh, Vertex, Vertex2D, Vertex2DColor, Vertex2DTexture, Vertex3D, Vertex3DTexture},
     shader::{Shader, ShaderConfig},
+    system::system,
     texture::{Texture, TextureFilterMode},
     transform::Transform,
     uniform::{Uniform, UniformType},
 };
-pub use system::system;

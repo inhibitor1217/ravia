@@ -218,8 +218,7 @@ impl Gpu {
 #[derive(Debug)]
 pub(super) struct GpuDefaultBindGroupLayouts {
     pub camera: wgpu::BindGroupLayout,
-    pub camera_transform: wgpu::BindGroupLayout,
-    pub model_transform: wgpu::BindGroupLayout,
+    pub transform: wgpu::BindGroupLayout,
     pub texture_2d: wgpu::BindGroupLayout,
 }
 
@@ -240,20 +239,7 @@ impl GpuDefaultBindGroupLayouts {
                     count: None,
                 }],
             }),
-            camera_transform: device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                label: None,
-                entries: &[wgpu::BindGroupLayoutEntry {
-                    binding: 0,
-                    visibility: wgpu::ShaderStages::VERTEX,
-                    ty: wgpu::BindingType::Buffer {
-                        ty: wgpu::BufferBindingType::Uniform,
-                        has_dynamic_offset: false,
-                        min_binding_size: None,
-                    },
-                    count: None,
-                }],
-            }),
-            model_transform: device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+            transform: device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 label: None,
                 entries: &[wgpu::BindGroupLayoutEntry {
                     binding: 0,
@@ -294,8 +280,8 @@ impl GpuDefaultBindGroupLayouts {
     pub fn uniform_layout(&self, uniform_type: &UniformType) -> &wgpu::BindGroupLayout {
         match uniform_type {
             UniformType::Camera => &self.camera,
-            UniformType::CameraTransform => &self.camera_transform,
-            UniformType::ModelTransform => &self.model_transform,
+            UniformType::CameraTransform => &self.transform,
+            UniformType::ModelTransform => &self.transform,
             UniformType::Texture2D => &self.texture_2d,
         }
     }

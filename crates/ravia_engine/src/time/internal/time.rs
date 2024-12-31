@@ -78,6 +78,16 @@ impl Time {
         time: Duration::ZERO,
         delta: Duration::ZERO,
     };
+
+    /// Returns the time in seconds.
+    pub fn seconds(&self) -> f32 {
+        self.time.as_secs_f32()
+    }
+
+    /// Returns the delta time in seconds.
+    pub fn delta_seconds(&self) -> f32 {
+        self.delta.as_secs_f32()
+    }
 }
 
 impl Default for Time {

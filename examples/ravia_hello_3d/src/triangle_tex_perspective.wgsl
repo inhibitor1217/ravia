@@ -12,12 +12,9 @@ struct CameraUniform {
   projection: mat4x4<f32>,
 };
 
-struct CameraTransformUniform {
-  inv_transform: mat4x4<f32>,
-};
-
-struct ModelTransformUniform {
+struct TransformUniform {
   transform: mat4x4<f32>,
+  transform_inv: mat4x4<f32>,
 };
 
 @group(0) @binding(0) var tex: texture_2d<f32>;
@@ -25,14 +22,14 @@ struct ModelTransformUniform {
 
 @group(1) @binding(0) var<uniform> camera: CameraUniform;
 
-@group(2) @binding(0) var<uniform> camera_transform: CameraTransformUniform;
+@group(2) @binding(0) var<uniform> camera_transform: TransformUniform;
 
-@group(3) @binding(0) var<uniform> model_transform: ModelTransformUniform;
+@group(3) @binding(0) var<uniform> model_transform: TransformUniform;
 
 @vertex
 fn vs_main(in: VertexInput) -> VertexOutput {
   var out: VertexOutput;
-  out.position = camera.projection * camera_transform.inv_transform * model_transform.transform * vec4<f32>(in.position, 1.0);
+  out.position = camera.projection * camera_transform.transform_inv * model_transform.transform * vec4<f32>(in.position, 1.0);
   out.uv = in.uv;
   return out;
 }

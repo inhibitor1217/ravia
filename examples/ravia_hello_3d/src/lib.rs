@@ -1,4 +1,3 @@
-use log::info;
 use ravia_engine::prelude::*;
 
 fn init_log() {
@@ -34,7 +33,7 @@ struct SampleMovement {}
 
 fn init_world(world: &mut World, ctx: &EngineContext) {
     let camera = Camera::perspective_with_defaults(ctx);
-    world.push((camera, Transform::identity(ctx, true)));
+    world.push((camera, Transform::identity(ctx)));
 
     let mesh = Mesh::new_indexed::<Vertex3DTexture>(
         ctx,
@@ -73,12 +72,7 @@ fn init_world(world: &mut World, ctx: &EngineContext) {
     let texture = Texture::default_2d(ctx);
     material.texture = Some(texture);
 
-    world.push((
-        mesh,
-        material,
-        Transform::identity(ctx, false),
-        SampleMovement {},
-    ));
+    world.push((mesh, material, Transform::identity(ctx), SampleMovement {}));
 }
 
 fn init_system(builder: &mut systems::Builder) {
@@ -86,6 +80,10 @@ fn init_system(builder: &mut systems::Builder) {
 }
 
 #[system(for_each)]
-fn sample_movement(_: &SampleMovement, _transform: &mut Transform, #[resource] time: &Time) {
-    info!("sample_movement, time: {:?}", time);
+fn sample_movement(_: &SampleMovement, transform: &mut Transform, #[resource] time: &Time) {
+    transform.set_position(vec3(
+        time.seconds().cos() * 0.5,
+        time.seconds().sin() * 0.5,
+        2.0,
+    ));
 }
