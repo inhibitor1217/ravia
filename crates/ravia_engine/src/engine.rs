@@ -10,7 +10,7 @@ use winit::{
     window::Window,
 };
 
-use crate::{ecs, graphics, math};
+use crate::{ecs, graphics, math, time};
 
 /// World initializer.
 pub type InitWorld = fn(&mut ecs::World, &EngineContext);
@@ -139,6 +139,7 @@ pub struct Engine {
 
     window: Arc<Window>,
     gpu: Arc<graphics::Gpu>,
+    timer: time::Timer,
 }
 
 impl Engine {
@@ -176,16 +177,27 @@ impl Engine {
         let gpu = graphics::Gpu::new(window.clone()).await;
         let gpu = Arc::new(gpu);
 
+        let timer = time::Timer::new();
+
         let mut world = ecs::World::default();
 
         let mut resources = ecs::Resources::default();
-        resources.insert(EngineContext { gpu: gpu.clone() });
+        resources.insert(EngineContext {
+            gpu: gpu.clone(),
+            time: time::Time::ZERO,
+        });
 
         let mut schedule_builder = ecs::Schedule::builder();
         graphics::system(&mut schedule_builder);
         let schedule = schedule_builder.build();
 
-        (config.init_world)(&mut world, &EngineContext { gpu: gpu.clone() });
+        (config.init_world)(
+            &mut world,
+            &EngineContext {
+                gpu: gpu.clone(),
+                time: time::Time::ZERO,
+            },
+        );
 
         Self {
             world,
@@ -194,6 +206,7 @@ impl Engine {
 
             window,
             gpu,
+            timer,
         }
     }
 
@@ -238,8 +251,12 @@ impl Engine {
         self.window.request_redraw();
     }
 
-    /// Handles the single frame render.
+    /// Handles the single frame update.
     fn frame(&mut self) {
+        self.timer.frame();
+        let time = self.timer.time();
+        self.resources.insert(time);
+
         self.schedule.execute(&mut self.world, &mut self.resources);
         self.gpu.render(&self.world);
     }
@@ -256,6 +273,7 @@ impl fmt::Debug for Engine {
 #[derive(Debug)]
 pub struct EngineContext {
     pub gpu: Arc<graphics::Gpu>,
+    pub time: time::Time,
 }
 
 fn resolve_future<F: Future<Output = ()> + 'static>(f: F) {
