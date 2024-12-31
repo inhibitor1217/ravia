@@ -33,7 +33,7 @@ fn init_world(world: &mut World, ctx: &EngineContext) {
 
     let mesh = Mesh::new::<Vertex2DColor>(
         ctx,
-        &vec![
+        &[
             Vertex2DColor {
                 position: vec2(-0.5, -0.5),
                 data: vec3(1.0, 0.0, 0.0),
