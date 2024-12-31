@@ -35,7 +35,7 @@ fn init_world(world: &mut World, ctx: &EngineContext) {
     let camera = Camera::perspective_with_defaults(ctx);
     world.push((camera, Transform::identity(ctx)));
 
-    let mesh = ravia_utils::load_mesh_from_obj(ctx, ravia_utils::engine_resource("model/quad.obj"))
+    let mesh = ravia_utils::load_mesh_from_obj(ctx, ravia_utils::engine_resource("model/cube.obj"))
         .unwrap();
 
     let mut material = Material::new(
@@ -64,6 +64,6 @@ fn example_movement(_: &ExampleMovement, transform: &mut Transform, #[resource] 
     transform.set_position(vec3(
         time.seconds().cos() * 0.5,
         time.seconds().sin() * 0.5,
-        2.0,
+        5.0,
     ));
 }
