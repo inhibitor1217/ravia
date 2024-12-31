@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use ravia_engine::prelude::*;
 
 fn init_log() {
@@ -35,28 +37,7 @@ fn init_world(world: &mut World, ctx: &EngineContext) {
     let camera = Camera::perspective_with_defaults(ctx);
     world.push((camera, Transform::identity(ctx)));
 
-    let mesh = Mesh::new_indexed::<Vertex3DTexture>(
-        ctx,
-        vec![
-            Vertex3DTexture {
-                position: vec3(-0.5, -0.5, 1.0),
-                data: vec2(0.0, 1.0),
-            },
-            Vertex3DTexture {
-                position: vec3(0.5, -0.5, 1.0),
-                data: vec2(1.0, 1.0),
-            },
-            Vertex3DTexture {
-                position: vec3(-0.5, 0.5, 1.0),
-                data: vec2(0.0, 0.0),
-            },
-            Vertex3DTexture {
-                position: vec3(0.5, 0.5, 1.0),
-                data: vec2(1.0, 0.0),
-            },
-        ],
-        vec![0, 1, 3, 0, 3, 2],
-    );
+    let mesh = ravia_utils::load_mesh_from_obj(ctx, Path::new("quad.obj")).unwrap();
 
     let mut material = Material::new(
         ctx,

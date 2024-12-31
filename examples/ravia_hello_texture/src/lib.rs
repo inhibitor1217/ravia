@@ -33,7 +33,7 @@ fn init_world(world: &mut World, ctx: &EngineContext) {
 
     let mesh = Mesh::new_indexed::<Vertex2DTexture>(
         ctx,
-        vec![
+        &vec![
             Vertex2DTexture {
                 position: vec2(-0.5, -0.5),
                 data: vec2(0.0, 1.0),
@@ -51,7 +51,7 @@ fn init_world(world: &mut World, ctx: &EngineContext) {
                 data: vec2(1.0, 0.0),
             },
         ],
-        vec![0, 1, 3, 0, 3, 2],
+        &vec![0, 1, 3, 0, 3, 2],
     );
 
     let mut material = Material::new(

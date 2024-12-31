@@ -5,7 +5,10 @@ pub use internal::{
     camera::Camera,
     gpu::Gpu,
     material::Material,
-    mesh::{Mesh, Vertex, Vertex2D, Vertex2DColor, Vertex2DTexture, Vertex3D, Vertex3DTexture},
+    mesh::{
+        Mesh, Vertex, Vertex2D, Vertex2DColor, Vertex2DTexture, Vertex3D, Vertex3DStandard,
+        Vertex3DStandardColored, Vertex3DTexture, VertexStandardColoredData, VertexStandardData,
+    },
     shader::{Shader, ShaderConfig},
     system::system,
     texture::{Texture, TextureFilterMode},

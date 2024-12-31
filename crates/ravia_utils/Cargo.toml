@@ -1,0 +1,10 @@
+[package]
+name = "ravia_utils"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.95"
+bytemuck = "1.21.0"
+ravia_engine = { version = "0.1.0", path = "../../crates/ravia_engine" }
+tobj = "4.0.2"

@@ -1,6 +1,7 @@
 [workspace]
 members = [
   "crates/ravia_engine",
+  "crates/ravia_utils",
   "examples/ravia_hello_3d",
   "examples/ravia_hello_texture",
   "examples/ravia_hello_triangle",

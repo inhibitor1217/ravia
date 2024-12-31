@@ -61,6 +61,50 @@ impl Vertex for Vertex3DTexture {
         &[wgpu::VertexFormat::Float32x3, wgpu::VertexFormat::Float32x2];
 }
 
+/// A standard vertex with a normal and a texture coordinate.
+#[repr(C)]
+#[derive(Clone, Copy, Debug, bytemuck::Zeroable)]
+pub struct VertexStandardData {
+    pub normal: math::Vec3,
+    pub uv: math::Vec2,
+}
+
+unsafe impl bytemuck::Pod for VertexStandardData {}
+
+/// A 3D vertex with a normal and a texture coordinate.
+pub type Vertex3DStandard = Vertex3D<VertexStandardData>;
+
+impl Vertex for Vertex3DStandard {
+    const ATTRIBUTE_FORMATS: &[wgpu::VertexFormat] = &[
+        wgpu::VertexFormat::Float32x3,
+        wgpu::VertexFormat::Float32x3,
+        wgpu::VertexFormat::Float32x2,
+    ];
+}
+
+/// A standard vertex with a normal, a texture coordinate, and a color.
+#[repr(C)]
+#[derive(Clone, Copy, Debug, bytemuck::Zeroable)]
+pub struct VertexStandardColoredData {
+    pub normal: math::Vec3,
+    pub uv: math::Vec2,
+    pub color: math::Vec3,
+}
+
+unsafe impl bytemuck::Pod for VertexStandardColoredData {}
+
+/// A 3D vertex with a normal, a texture coordinate, and a color.
+pub type Vertex3DStandardColored = Vertex3D<VertexStandardColoredData>;
+
+impl Vertex for Vertex3DStandardColored {
+    const ATTRIBUTE_FORMATS: &[wgpu::VertexFormat] = &[
+        wgpu::VertexFormat::Float32x3,
+        wgpu::VertexFormat::Float32x3,
+        wgpu::VertexFormat::Float32x2,
+        wgpu::VertexFormat::Float32x3,
+    ];
+}
+
 /// A [`Mesh`] component describes a shape that can be rendered with a GPU.
 #[derive(Debug)]
 pub struct Mesh {
@@ -76,20 +120,16 @@ impl Mesh {
     /// Creates a new [`Mesh`] from vertex data.
     ///
     /// This is a convenience function that creates an indexed mesh with the default indices.
-    pub fn new<V: Vertex>(ctx: &EngineContext, vertices: Vec<V>) -> Self {
-        let indices = (0..vertices.len() as u32).collect();
-        Self::new_indexed(ctx, vertices, indices)
+    pub fn new<V: Vertex>(ctx: &EngineContext, vertices: &[V]) -> Self {
+        let indices = (0..vertices.len() as u32).collect::<Vec<_>>();
+        Self::new_indexed(ctx, vertices, &indices)
     }
 
     /// Creates a new [`Mesh`] from vertex and index data.
     ///
     /// For now, we are allocating a new buffer for each mesh. This can be later optimized by allocating
     /// a large buffer for multiple meshes and tracking their offset.
-    pub fn new_indexed<V: Vertex>(
-        ctx: &EngineContext,
-        vertices: Vec<V>,
-        indices: Vec<u32>,
-    ) -> Self {
+    pub fn new_indexed<V: Vertex>(ctx: &EngineContext, vertices: &[V], indices: &[u32]) -> Self {
         let vertex_buffer = ctx
             .gpu
             .device
