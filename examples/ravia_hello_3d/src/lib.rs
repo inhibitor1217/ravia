@@ -29,7 +29,7 @@ pub fn run() {
 }
 
 #[derive(Debug)]
-struct SampleMovement {}
+struct ExampleMovement {}
 
 fn init_world(world: &mut World, ctx: &EngineContext) {
     let camera = Camera::perspective_with_defaults(ctx);
@@ -72,15 +72,15 @@ fn init_world(world: &mut World, ctx: &EngineContext) {
     let texture = Texture::default_2d(ctx);
     material.texture = Some(texture);
 
-    world.push((mesh, material, Transform::identity(ctx), SampleMovement {}));
+    world.push((mesh, material, Transform::identity(ctx), ExampleMovement {}));
 }
 
 fn init_system(builder: &mut systems::Builder) {
-    builder.add_system(sample_movement_system());
+    builder.add_system(example_movement_system());
 }
 
 #[system(for_each)]
-fn sample_movement(_: &SampleMovement, transform: &mut Transform, #[resource] time: &Time) {
+fn example_movement(_: &ExampleMovement, transform: &mut Transform, #[resource] time: &Time) {
     transform.set_position(vec3(
         time.seconds().cos() * 0.5,
         time.seconds().sin() * 0.5,
