@@ -17,3 +17,6 @@ legion = "0.4.0"
 console_error_panic_hook = "0.1.7"
 console_log = { version = "1.0.0", features = ["color"] }
 wasm-bindgen = "0.2.99"
+
+[build-dependencies]
+ravia_build = { version = "0.1.0", path = "../../crates/ravia_build" }

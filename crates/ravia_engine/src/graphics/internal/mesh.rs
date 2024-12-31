@@ -65,8 +65,8 @@ impl Vertex for Vertex3DTexture {
 #[repr(C)]
 #[derive(Clone, Copy, Debug, bytemuck::Zeroable)]
 pub struct VertexStandardData {
-    pub normal: math::Vec3,
     pub uv: math::Vec2,
+    pub normal: math::Vec3,
 }
 
 unsafe impl bytemuck::Pod for VertexStandardData {}
@@ -77,8 +77,8 @@ pub type Vertex3DStandard = Vertex3D<VertexStandardData>;
 impl Vertex for Vertex3DStandard {
     const ATTRIBUTE_FORMATS: &[wgpu::VertexFormat] = &[
         wgpu::VertexFormat::Float32x3,
-        wgpu::VertexFormat::Float32x3,
         wgpu::VertexFormat::Float32x2,
+        wgpu::VertexFormat::Float32x3,
     ];
 }
 
@@ -86,8 +86,8 @@ impl Vertex for Vertex3DStandard {
 #[repr(C)]
 #[derive(Clone, Copy, Debug, bytemuck::Zeroable)]
 pub struct VertexStandardColoredData {
-    pub normal: math::Vec3,
     pub uv: math::Vec2,
+    pub normal: math::Vec3,
     pub color: math::Vec3,
 }
 
@@ -99,8 +99,8 @@ pub type Vertex3DStandardColored = Vertex3D<VertexStandardColoredData>;
 impl Vertex for Vertex3DStandardColored {
     const ATTRIBUTE_FORMATS: &[wgpu::VertexFormat] = &[
         wgpu::VertexFormat::Float32x3,
-        wgpu::VertexFormat::Float32x3,
         wgpu::VertexFormat::Float32x2,
+        wgpu::VertexFormat::Float32x3,
         wgpu::VertexFormat::Float32x3,
     ];
 }

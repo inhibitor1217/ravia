@@ -1,5 +1,3 @@
-use std::path::Path;
-
 use ravia_engine::prelude::*;
 
 fn init_log() {
@@ -37,12 +35,13 @@ fn init_world(world: &mut World, ctx: &EngineContext) {
     let camera = Camera::perspective_with_defaults(ctx);
     world.push((camera, Transform::identity(ctx)));
 
-    let mesh = ravia_utils::load_mesh_from_obj(ctx, Path::new("quad.obj")).unwrap();
+    let mesh = ravia_utils::load_mesh_from_obj(ctx, ravia_utils::engine_resource("model/quad.obj"))
+        .unwrap();
 
     let mut material = Material::new(
         ctx,
         &ShaderConfig::new(include_str!("triangle_tex_perspective.wgsl"))
-            .with_vertex_type::<Vertex3DTexture>()
+            .with_vertex_type::<Vertex3DStandard>()
             .with_uniforms(&[
                 UniformType::Texture2D,
                 UniformType::Camera,

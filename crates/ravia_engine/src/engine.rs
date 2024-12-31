@@ -1,7 +1,7 @@
 use core::fmt;
 use std::{future::Future, sync::Arc};
 
-use log::{debug, info};
+use log::{debug, info, trace};
 use winit::{
     application::ApplicationHandler,
     dpi::LogicalSize,
@@ -89,7 +89,7 @@ impl ApplicationHandler<EngineEvent> for EngineState {
     }
 
     fn user_event(&mut self, _event_loop: &ActiveEventLoop, event: EngineEvent) {
-        debug!(target: "ravia_engine::engine_state", "User event: {:?}", event);
+        trace!(target: "ravia_engine::engine_state", "User event: {:?}", event);
 
         match event {
             EngineEvent::Initialized(engine) => {
@@ -105,7 +105,7 @@ impl ApplicationHandler<EngineEvent> for EngineState {
         window_id: winit::window::WindowId,
         event: winit::event::WindowEvent,
     ) {
-        debug!(target: "ravia_engine::engine_state", "Window event: {:?}", event);
+        trace!(target: "ravia_engine::engine_state", "Window event: {:?}", event);
 
         let engine = match self {
             EngineState::Running(engine) => engine,

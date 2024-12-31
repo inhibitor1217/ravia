@@ -586,6 +586,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "aa9a19cbb55df58761df49b23516a86d432839add4af60fc256da840f66ed35b"
 
 [[package]]
+name = "fs_extra"
+version = "1.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "42703706b716c37f96a77aea830392ad231f44c9e9a67872fa5548707e11b11c"
+
+[[package]]
 name = "gethostname"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -627,6 +633,12 @@ checksum = "dc46dd3ec48fdd8e693a98d2b8bafae273a2d54c1de02a2a7e3d57d501f39677"
 dependencies = [
  "bytemuck",
 ]
+
+[[package]]
+name = "glob"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a8d1add55171497b4705a648c6b583acafb01d58050a51727785f0b2c8e0a2b2"
 
 [[package]]
 name = "glow"
@@ -1434,6 +1446,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9c8a99fddc9f0ba0a85884b8d14e3592853e787d581ca1816c91349b10e4eeab"
 
 [[package]]
+name = "ravia_build"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "fs_extra",
+ "glob",
+]
+
+[[package]]
 name = "ravia_engine"
 version = "0.1.0"
 dependencies = [
@@ -1460,6 +1481,7 @@ dependencies = [
  "env_logger",
  "legion",
  "log",
+ "ravia_build",
  "ravia_engine",
  "ravia_utils",
  "wasm-bindgen",
@@ -1473,6 +1495,7 @@ dependencies = [
  "console_log",
  "env_logger",
  "log",
+ "ravia_build",
  "ravia_engine",
  "wasm-bindgen",
 ]
@@ -1485,6 +1508,7 @@ dependencies = [
  "console_log",
  "env_logger",
  "log",
+ "ravia_build",
  "ravia_engine",
  "wasm-bindgen",
 ]

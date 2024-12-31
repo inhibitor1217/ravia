@@ -24,10 +24,11 @@ pub fn load_mesh_from_obj<P: AsRef<Path> + Debug>(
     }
 
     let model = models.first().unwrap();
+    let num_vertices = model.mesh.positions.len() / 3;
 
     let mesh = if model.mesh.vertex_color.is_empty() {
         let mut vertices = vec![];
-        for i in 0..model.mesh.positions.len() {
+        for i in 0..num_vertices {
             vertices.push(Vertex3DStandard {
                 position: Vec3::from_slice(&model.mesh.positions[3 * i..3 * i + 3]),
                 data: VertexStandardData {
@@ -39,7 +40,7 @@ pub fn load_mesh_from_obj<P: AsRef<Path> + Debug>(
         Mesh::new_indexed(ctx, &vertices, &model.mesh.indices)
     } else {
         let mut vertices = vec![];
-        for i in 0..model.mesh.positions.len() {
+        for i in 0..num_vertices {
             vertices.push(Vertex3DStandardColored {
                 position: Vec3::from_slice(&model.mesh.positions[3 * i..3 * i + 3]),
                 data: VertexStandardColoredData {

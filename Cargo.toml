@@ -1,5 +1,5 @@
 [workspace]
-members = [
+members = [ "crates/ravia_build",
   "crates/ravia_engine",
   "crates/ravia_utils",
   "examples/ravia_hello_3d",
