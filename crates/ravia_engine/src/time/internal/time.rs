@@ -58,6 +58,12 @@ impl Timer {
     }
 }
 
+impl Default for Timer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /// [`Time`] provides the time information of the engine.
 #[derive(Debug, Clone, Copy)]
 pub struct Time {
