@@ -91,6 +91,12 @@ impl Transform {
         self.dirty = true;
     }
 
+    /// Rotates the transform by given euler angles.
+    pub fn set_rotation_euler(&mut self, euler: math::Vec3) {
+        self.rotation = math::Quat::from_euler(math::EulerRot::ZXY, euler.x, euler.y, euler.z);
+        self.dirty = true;
+    }
+
     /// Returns the local scale of the transform.
     pub fn scale(&self) -> &math::Vec3 {
         &self.scale

@@ -64,6 +64,8 @@ fn example_movement(_: &ExampleMovement, transform: &mut Transform, #[resource] 
     transform.set_position(vec3(
         time.seconds().cos() * 0.5,
         time.seconds().sin() * 0.5,
-        5.0,
+        -5.0,
     ));
+
+    transform.set_rotation_euler(time.seconds() * Vec3::ONE);
 }

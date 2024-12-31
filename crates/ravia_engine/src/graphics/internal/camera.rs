@@ -60,7 +60,7 @@ impl Camera {
     ) -> Self {
         Self::new(
             ctx,
-            math::Mat4::perspective_lh(fov_y, aspect_ratio, z_near, z_far),
+            math::Mat4::perspective_rh(fov_y, aspect_ratio, z_near, z_far),
         )
     }
 
