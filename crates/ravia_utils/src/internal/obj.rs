@@ -1,21 +1,27 @@
-use std::{fmt::Debug, path::Path};
+use std::io::{BufReader, Read};
 
 use ravia_engine::prelude::*;
 
-/// Loads a mesh from an OBJ file.
+use super::resource::read_resource;
+
+/// Loads a mesh from a buffer containing an OBJ-formatted buffer.
 ///
-/// This function expects an .obj file with vertex data, together with optional vertex colors,
+/// This function expects an .obj buffer with vertex data, together with optional vertex colors,
 /// normals, or texture coordinates. The mesh will be composed with appropriate data type.
-pub fn load_mesh_from_obj<P: AsRef<Path> + Debug>(
-    ctx: &EngineContext,
-    path: P,
-) -> crate::Result<Mesh> {
-    let (models, _) = tobj::load_obj(
-        path,
+pub fn load_mesh_from_obj<R: Read>(ctx: &EngineContext, read: R) -> crate::Result<Mesh> {
+    let mut buf = BufReader::new(read);
+    let (models, _) = tobj::load_obj_buf(
+        &mut buf,
         &tobj::LoadOptions {
             single_index: true,
             triangulate: true,
             ..Default::default()
+        },
+        |path| {
+            let path = path.to_str().expect("invalid path");
+            let res = read_resource(path).map_err(|_| tobj::LoadError::OpenFileFailed)?;
+            let mut buf = BufReader::new(res);
+            tobj::load_mtl_buf(&mut buf)
         },
     )?;
 

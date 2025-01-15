@@ -45,8 +45,9 @@ fn copy_resources() -> Result<()> {
     copy_options.overwrite = true;
     copy_options.content_only = true;
 
-    let engine_assets_out_dir = Path::new(&out_dir).join("res/engine");
-    let user_assets_out_dir = Path::new(&out_dir).join("res/user");
+    let assets_out_dir = Path::new(&out_dir).join("res");
+    let engine_assets_out_dir = assets_out_dir.join("engine");
+    let user_assets_out_dir = assets_out_dir.join("user");
 
     // Create destination directories
     fs::create_dir_all(engine_assets_out_dir.clone())?;
@@ -70,12 +71,8 @@ fn copy_resources() -> Result<()> {
     }
 
     println!(
-        "cargo:rustc-env=RAVIA_ENGINE_RES={}",
-        engine_assets_out_dir.to_string_lossy()
-    );
-    println!(
-        "cargo:rustc-env=RAVIA_USER_RES={}",
-        user_assets_out_dir.to_string_lossy()
+        "cargo:rustc-env=RAVIA_RES={}",
+        assets_out_dir.to_string_lossy()
     );
 
     Ok(())
