@@ -21,6 +21,7 @@ fn copy_resources() -> Result<()> {
     println!("cargo::rerun-if-env-changed=CARGO_MANIFEST_DIR");
     println!("cargo::rerun-if-env-changed=PROFILE");
 
+    let target_arch = std::env::var("CARGO_CFG_TARGET_ARCH")?;
     let working_dir = std::env::var("CARGO_MANIFEST_DIR")?;
     let default_engine_res_dir = Path::new(&working_dir).join("../../crates/ravia_res");
     let default_user_res_dir = Path::new(&working_dir).join("res");
@@ -34,9 +35,12 @@ fn copy_resources() -> Result<()> {
         default_user_res_dir.to_string_lossy()
     );
 
-    println!("Boo");
+    let out_dir = if target_arch == "wasm32" {
+        String::from(Path::new(&working_dir).join("pkg/static").to_string_lossy())
+    } else {
+        std::env::var("OUT_DIR")?
+    };
 
-    let out_dir = std::env::var("OUT_DIR")?;
     let mut copy_options = CopyOptions::new();
     copy_options.overwrite = true;
     copy_options.content_only = true;
