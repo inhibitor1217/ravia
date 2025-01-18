@@ -45,6 +45,8 @@ impl ResourceManager {
 
     #[cfg(not(target_arch = "wasm32"))]
     async fn load_from_filesystem(&self, res: &Resource) -> Result<Box<dyn Read>> {
+        log::info!("loading resource from filesystem: {}", res);
+
         let path = self.resource_root.join(&res.path);
         match std::fs::File::open(path) {
             Ok(file) => Ok(Box::new(file)),
