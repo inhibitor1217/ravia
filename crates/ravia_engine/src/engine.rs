@@ -184,7 +184,7 @@ impl Engine {
         let gpu = graphics::Gpu::new(window.clone()).await;
         let gpu = Arc::new(gpu);
 
-        let resource_manager = resource::ResourceManager::default();
+        let resource_manager = resource::ResourceManager::new();
         let resource_manager = Arc::new(resource_manager);
 
         let timer = time::Timer::new();
@@ -208,7 +208,7 @@ impl Engine {
                 gpu: gpu.clone(),
                 resource_manager: resource_manager.clone(),
             },
-         );
+        );
 
         Self {
             world,
