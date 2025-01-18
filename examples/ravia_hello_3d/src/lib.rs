@@ -35,8 +35,8 @@ fn init_world(world: &mut World, ctx: &EngineContext) {
     let camera = Camera::perspective_with_defaults(ctx);
     world.push((camera, Transform::identity(ctx)));
 
-    let cube_obj = ravia_utils::read_resource("engine/model/cube.obj").unwrap();
-    let mesh = ravia_utils::load_mesh_from_obj(ctx, cube_obj).unwrap();
+    // let cube_obj = ravia_utils::read_resource("engine/model/cube.obj").unwrap();
+    // let mesh = ravia_utils::load_mesh_from_obj(ctx, cube_obj).unwrap();
 
     let mut material = Material::new(
         ctx,
@@ -52,7 +52,7 @@ fn init_world(world: &mut World, ctx: &EngineContext) {
     let texture = Texture::default_2d(ctx);
     material.texture = Some(texture);
 
-    world.push((mesh, material, Transform::identity(ctx), ExampleMovement {}));
+    world.push((material, Transform::identity(ctx), ExampleMovement {}));
 }
 
 fn init_system(builder: &mut systems::Builder) {

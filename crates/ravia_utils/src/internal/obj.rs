@@ -2,8 +2,6 @@ use std::io::{BufReader, Read};
 
 use ravia_engine::prelude::*;
 
-use super::resource::read_resource;
-
 /// Loads a mesh from a buffer containing an OBJ-formatted buffer.
 ///
 /// This function expects an .obj buffer with vertex data, together with optional vertex colors,
@@ -17,12 +15,8 @@ pub fn load_mesh_from_obj<R: Read>(ctx: &EngineContext, read: R) -> crate::Resul
             triangulate: true,
             ..Default::default()
         },
-        |path| {
-            let path = path.to_str().expect("invalid path");
-            let res = read_resource(path).map_err(|_| tobj::LoadError::OpenFileFailed)?;
-            let mut buf = BufReader::new(res);
-            tobj::load_mtl_buf(&mut buf)
-        },
+        // we do not allow loading materials for now.
+        |_| Err(tobj::LoadError::GenericFailure),
     )?;
 
     if models.is_empty() {

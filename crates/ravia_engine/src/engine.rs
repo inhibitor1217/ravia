@@ -10,7 +10,7 @@ use winit::{
     window::Window,
 };
 
-use crate::{ecs, graphics, math, time};
+use crate::{ecs, graphics, math, resource, time};
 
 /// World initializer.
 pub type InitWorld = fn(&mut ecs::World, &EngineContext);
@@ -145,6 +145,7 @@ pub struct Engine {
 
     window: Arc<Window>,
     gpu: Arc<graphics::Gpu>,
+    resource_manager: Arc<resource::ResourceManager>,
     timer: time::Timer,
 }
 
@@ -183,19 +184,31 @@ impl Engine {
         let gpu = graphics::Gpu::new(window.clone()).await;
         let gpu = Arc::new(gpu);
 
+        let resource_manager = resource::ResourceManager::default();
+        let resource_manager = Arc::new(resource_manager);
+
         let timer = time::Timer::new();
 
         let mut world = ecs::World::default();
 
         let mut resources = ecs::Resources::default();
-        resources.insert(EngineContext { gpu: gpu.clone() });
+        resources.insert(EngineContext {
+            gpu: gpu.clone(),
+            resource_manager: resource_manager.clone(),
+        });
 
         let mut schedule_builder = ecs::Schedule::builder();
         graphics::system(&mut schedule_builder);
         (config.init_system)(&mut schedule_builder);
         let schedule = schedule_builder.build();
 
-        (config.init_world)(&mut world, &EngineContext { gpu: gpu.clone() });
+        (config.init_world)(
+            &mut world,
+            &EngineContext {
+                gpu: gpu.clone(),
+                resource_manager: resource_manager.clone(),
+            },
+         );
 
         Self {
             world,
@@ -204,6 +217,7 @@ impl Engine {
 
             window,
             gpu,
+            resource_manager,
             timer,
         }
     }
@@ -271,6 +285,7 @@ impl fmt::Debug for Engine {
 #[derive(Debug)]
 pub struct EngineContext {
     pub gpu: Arc<graphics::Gpu>,
+    pub resource_manager: Arc<resource::ResourceManager>,
 }
 
 fn resolve_future<F: Future<Output = ()> + 'static>(f: F) {
