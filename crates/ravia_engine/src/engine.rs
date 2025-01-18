@@ -199,6 +199,7 @@ impl Engine {
 
         let mut schedule_builder = ecs::Schedule::builder();
         graphics::system(&mut schedule_builder);
+        resource::system(&mut schedule_builder);
         (config.init_system)(&mut schedule_builder);
         let schedule = schedule_builder.build();
 
