@@ -1,3 +1,5 @@
+use std::io::BufReader;
+
 use wgpu::util::DeviceExt;
 
 use crate::{ecs, engine::EngineContext, math};
@@ -181,4 +183,58 @@ impl Mesh {
     pub(super) fn index_slice(&self) -> wgpu::BufferSlice {
         self.index_buffer.slice(..)
     }
+}
+
+/// Loads a mesh from a buffer containing an OBJ-formatted buffer.
+///
+/// This function expects an .obj buffer with vertex data, together with optional vertex colors,
+/// normals, or texture coordinates. The mesh will be composed with appropriate data type.
+pub fn load_mesh_from_obj(ctx: &EngineContext, data: &[u8]) -> Result<Mesh, anyhow::Error> {
+    let mut buf = BufReader::new(data);
+    let (models, _) = tobj::load_obj_buf(
+        &mut buf,
+        &tobj::LoadOptions {
+            single_index: true,
+            triangulate: true,
+            ..Default::default()
+        },
+        // we do not allow loading materials for now.
+        |_| Err(tobj::LoadError::GenericFailure),
+    )?;
+
+    if models.is_empty() {
+        return Err(anyhow::anyhow!("No models found in the OBJ file"));
+    }
+
+    let model = models.first().unwrap();
+    let num_vertices = model.mesh.positions.len() / 3;
+
+    let mesh = if model.mesh.vertex_color.is_empty() {
+        let mut vertices = vec![];
+        for i in 0..num_vertices {
+            vertices.push(Vertex3DStandard {
+                position: math::Vec3::from_slice(&model.mesh.positions[3 * i..3 * i + 3]),
+                data: VertexStandardData {
+                    normal: math::Vec3::from_slice(&model.mesh.normals[3 * i..3 * i + 3]),
+                    uv: math::Vec2::from_slice(&model.mesh.texcoords[2 * i..2 * i + 2]),
+                },
+            });
+        }
+        Mesh::new_indexed(ctx, &vertices, &model.mesh.indices)
+    } else {
+        let mut vertices = vec![];
+        for i in 0..num_vertices {
+            vertices.push(Vertex3DStandardColored {
+                position: math::Vec3::from_slice(&model.mesh.positions[3 * i..3 * i + 3]),
+                data: VertexStandardColoredData {
+                    normal: math::Vec3::from_slice(&model.mesh.normals[3 * i..3 * i + 3]),
+                    uv: math::Vec2::from_slice(&model.mesh.texcoords[2 * i..2 * i + 2]),
+                    color: math::Vec3::from_slice(&model.mesh.vertex_color[3 * i..3 * i + 3]),
+                },
+            });
+        }
+        Mesh::new_indexed(ctx, &vertices, &model.mesh.indices)
+    };
+
+    Ok(mesh)
 }

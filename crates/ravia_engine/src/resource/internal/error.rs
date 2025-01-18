@@ -3,15 +3,17 @@ use super::resource::Resource;
 /// Possible errors for managing resources.
 #[derive(Debug, Clone, PartialEq)]
 pub enum Error {
-    ResourceLoadFailed(Resource),
-    ResourceNotFound(Resource),
+    LoadFailed(Resource),
+    NotFound(Resource),
+    Unknown,
 }
 
 impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let msg = match self {
-            Error::ResourceLoadFailed(res) => format!("failed to load resource: {}", res.path),
-            Error::ResourceNotFound(res) => format!("resource not found: {}", res.path),
+            Error::LoadFailed(res) => format!("failed to load resource: {}", res.path),
+            Error::NotFound(res) => format!("resource not found: {}", res.path),
+            Error::Unknown => "unknown resource requested".to_string(),
         };
         write!(f, "{}", msg)
     }
